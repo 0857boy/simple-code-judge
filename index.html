@@ -105,6 +105,19 @@
         .carousel-container button:hover {
             background-color: #0056b3;
         }
+        .spinner {
+            display: none;
+            border: 4px solid rgba(0, 0, 0, 0.1);
+            border-radius: 50%;
+            border-top: 4px solid #007BFF;
+            width: 24px;
+            height: 24px;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
     </style>
 </head>
 <body>
@@ -115,6 +128,7 @@
             輸入內容 (.in): <textarea id="testInput" rows="4" cols="50"></textarea><br>
             預期輸出 (.out): <textarea id="testOutput" rows="4" cols="50"></textarea><br>
             <button onclick="uploadTestcase()">上傳</button>
+            <div id="uploadSpinner" class="spinner"></div>
         </div>
     </div>
 
@@ -124,6 +138,7 @@
             <select id="testcaseSelect" multiple></select>
             <button onclick="loadTestcase()">載入</button>
             <button onclick="deleteTestcase()">刪除</button>
+            <div id="deleteSpinner" class="spinner"></div>
         </div>
     </div>
 
@@ -138,6 +153,7 @@
                 <option value="python">Python</option>
             </select>
             <button onclick="submitCode()">測試</button>
+            <div id="submitSpinner" class="spinner"></div>
         </div>
     </div>
 
@@ -158,6 +174,7 @@
             <button onclick="exportTestcases()">匯出測試資料</button>
             <input type="file" id="importFile" style="display:none" onchange="importTestcases(event)">
             <button onclick="document.getElementById('importFile').click()">匯入測試資料</button>
+            <div id="importSpinner" class="spinner"></div>
         </div>
     </div>
 
@@ -170,7 +187,16 @@
         let testResults = [];
         let currentIndex = 0;
 
+        function showSpinner(spinnerId) {
+            document.getElementById(spinnerId).style.display = 'inline-block';
+        }
+
+        function hideSpinner(spinnerId) {
+            document.getElementById(spinnerId).style.display = 'none';
+        }
+
         function uploadTestcase() {
+            showSpinner('uploadSpinner');
             let testName = document.getElementById("testName").value;
             let testInput = document.getElementById("testInput").value;
             let testOutput = document.getElementById("testOutput").value;
@@ -182,10 +208,15 @@
 
             fetch("/upload", { method: "POST", body: formData })
                 .then(res => res.json())
-                .then(data => alert(data.message || data.error));
+                .then(data => {
+                    alert(data.message || data.error);
+                    hideSpinner('uploadSpinner');
+                    refreshTestcaseOptions();
+                });
         }
 
         function submitCode() {
+            showSpinner('submitSpinner');
             let code = document.getElementById("codeInput").value;
             let lang = document.getElementById("langSelect").value;
             let formData = new FormData();
@@ -201,6 +232,7 @@
                     testResults = Object.entries(data);
                     currentIndex = 0;
                     updateResultDisplay();
+                    hideSpinner('submitSpinner');
                 });
         }
 
@@ -227,6 +259,7 @@
         }
 
         function exportTestcases() {
+            showSpinner('exportSpinner');
             fetch("/export", { method: "GET" })
                 .then(res => res.blob())
                 .then(blob => {
@@ -234,10 +267,12 @@
                     link.href = URL.createObjectURL(blob);
                     link.download = "testcases.zip";
                     link.click();
+                    hideSpinner('exportSpinner');
                 });
         }
 
         function importTestcases(event) {
+            showSpinner('importSpinner');
             let file = event.target.files[0];
             if (!file) return;
 
@@ -246,13 +281,19 @@
 
             fetch("/import", { method: "POST", body: formData })
                 .then(res => res.json())
-                .then(data => alert(data.message || data.error));
+                .then(data => {
+                    alert(data.message || data.error);
+                    hideSpinner('importSpinner');
+                    refreshTestcaseOptions();
+                });
         }
 
         function deleteTestcase() {
+            showSpinner('deleteSpinner');
             let selectedTestcases = Array.from(document.getElementById("testcaseSelect").selectedOptions).map(option => option.value);
             if (selectedTestcases.length === 0) {
                 alert("請選擇要刪除的測試資料");
+                hideSpinner('deleteSpinner');
                 return;
             }
 
@@ -272,21 +313,28 @@
                             if (option) option.remove();
                         });
                     }
+                    hideSpinner('deleteSpinner');
+                });
+        }
+
+        function refreshTestcaseOptions() {
+            fetch("/testcases", { method: "GET" })
+                .then(res => res.json())
+                .then(files => {
+                    let select = document.getElementById("testcaseSelect");
+                    select.innerHTML = ''; // 清空選項
+                    let uniqueFiles = new Set(files.map(file => file.replace(/\.(in|out)$/, '')));
+                    uniqueFiles.forEach(file => {
+                        let option = document.createElement("option");
+                        option.value = file;
+                        option.text = file;
+                        select.add(option);
+                    });
                 });
         }
 
         // 初始化測試資料選項
-        fetch("/testcases", { method: "GET" })
-            .then(res => res.json())
-            .then(files => {
-                let select = document.getElementById("testcaseSelect");
-                files.forEach(file => {
-                    let option = document.createElement("option");
-                    option.value = file;
-                    option.text = file;
-                    select.add(option);
-                });
-            });
+        refreshTestcaseOptions();
     </script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.7.1/jszip.min.js"></script>
 </body>

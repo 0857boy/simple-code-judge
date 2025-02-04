@@ -12,6 +12,9 @@ RUN pip install flask flask-cors
 # 複製程式碼
 COPY app.py /app/app.py
 
+# 複製網頁
+COPY index.html /app/index.html
+
 # 開放 Flask 服務
 EXPOSE 5000
 

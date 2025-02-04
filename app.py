@@ -16,7 +16,7 @@ os.makedirs(TESTCASE_DIR, exist_ok=True)
 
 @app.route("/")
 def home():
-    return "Judge 伺服器運行中 (僅限 localhost)！"
+    return send_file('index.html')
 
 # 上傳測試資料 (支援 .in 和 .out 檔案)
 @app.route("/upload", methods=["POST"])
@@ -84,7 +84,7 @@ def delete_testcases():
         output_file = os.path.join(TESTCASE_DIR, testcase.replace(".in", ".out"))
         if os.path.exists(input_file):
             os.remove(input_file)
-        if os.path.exists(output_file):
+        if (os.path.exists(output_file)):
             os.remove(output_file)
 
     return jsonify({"message": "測試資料刪除成功"}), 200
