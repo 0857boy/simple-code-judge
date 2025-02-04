@@ -1,0 +1,19 @@
+FROM python:3.9
+
+# 安裝必要的工具
+RUN apt update && apt install -y g++ openjdk-17-jdk
+
+# 設定工作目錄
+WORKDIR /app
+
+# 安裝 Flask
+RUN pip install flask flask-cors
+
+# 複製程式碼
+COPY app.py /app/app.py
+
+# 開放 Flask 服務
+EXPOSE 5000
+
+# 啟動 Flask
+CMD ["python", "app.py"]

@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <title>Simple Code Judge</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Roboto', sans-serif;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            font-size: 16px;
+            line-height: 1.5;
+        }
+        h2 {
+            color: #333;
+            margin-bottom: 10px;
+            cursor: pointer;
+            transition: color 0.3s ease;
+        }
+        h2:hover {
+            color: #007BFF;
+        }
+        .container {
+            background-color: #fff;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            width: 80%;
+            max-width: 800px;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        .container:hover {
+            transform: scale(1.02);
+            box-shadow: 0 0 15px rgba(0, 0, 0, 0.2);
+        }
+        .content {
+            display: none;
+            margin-top: 10px;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+        .content.show {
+            display: block;
+            opacity: 1;
+        }
+        input, textarea, select, button {
+            width: 100%;
+            padding: 10px;
+            margin: 10px 0;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-size: 16px;
+            transition: border-color 0.3s ease, box-shadow 0.3s ease;
+        }
+        input:focus, textarea:focus, select:focus, button:focus {
+            border-color: #007BFF;
+            box-shadow: 0 0 5px rgba(0, 123, 255, 0.5);
+            outline: none;
+        }
+        button {
+            background-color: #007BFF;
+            color: #fff;
+            border: none;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        .carousel-container {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-top: 20px;
+        }
+        .carousel {
+            width: 500px;
+            height: 200px;
+            border: 1px solid #000;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 18px;
+            background-color: #fff;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s ease;
+        }
+        .carousel-container button {
+            background-color: #007BFF;
+            color: #fff;
+            border: none;
+            cursor: pointer;
+            padding: 10px;
+            margin: 0 10px;
+            border-radius: 50%;
+            transition: background-color 0.3s ease;
+        }
+        .carousel-container button:hover {
+            background-color: #0056b3;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2 onclick="toggleContent(this)">新增測試資料</h2>
+        <div class="content">
+            命名新測試檔名 (不包含副檔名): <input type="text" id="testName"><br>
+            輸入內容 (.in): <textarea id="testInput" rows="4" cols="50"></textarea><br>
+            預期輸出 (.out): <textarea id="testOutput" rows="4" cols="50"></textarea><br>
+            <button onclick="uploadTestcase()">上傳</button>
+        </div>
+    </div>
+
+    <div class="container">
+        <h2 onclick="toggleContent(this)">選取測試資料</h2>
+        <div class="content">
+            <select id="testcaseSelect" multiple></select>
+            <button onclick="loadTestcase()">載入</button>
+            <button onclick="deleteTestcase()">刪除</button>
+        </div>
+    </div>
+
+    <div class="container">
+        <h2 onclick="toggleContent(this)">提交程式碼</h2>
+        <div class="content">
+            <textarea id="codeInput" rows="10" cols="50"></textarea><br>
+            語言:
+            <select id="langSelect">
+                <option value="cpp">C++</option>
+                <option value="java">Java</option>
+                <option value="python">Python</option>
+            </select>
+            <button onclick="submitCode()">測試</button>
+        </div>
+    </div>
+
+    <div class="container">
+        <h2 onclick="toggleContent(this)">測試結果</h2>
+        <div class="content">
+            <div class="carousel-container">
+                <button onclick="prevResult()">&#9664;</button>
+                <div id="resultOutput" class="carousel">等待測試結果...</div>
+                <button onclick="nextResult()">&#9654;</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="container">
+        <h2 onclick="toggleContent(this)">匯出/匯入測試資料</h2>
+        <div class="content">
+            <button onclick="exportTestcases()">匯出測試資料</button>
+            <input type="file" id="importFile" style="display:none" onchange="importTestcases(event)">
+            <button onclick="document.getElementById('importFile').click()">匯入測試資料</button>
+        </div>
+    </div>
+
+    <script>
+        function toggleContent(element) {
+            const content = element.nextElementSibling;
+            content.classList.toggle('show');
+        }
+
+        let testResults = [];
+        let currentIndex = 0;
+
+        function uploadTestcase() {
+            let testName = document.getElementById("testName").value;
+            let testInput = document.getElementById("testInput").value;
+            let testOutput = document.getElementById("testOutput").value;
+            
+            let formData = new FormData();
+            formData.append("name", testName);
+            formData.append("input", testInput);
+            formData.append("output", testOutput);
+
+            fetch("/upload", { method: "POST", body: formData })
+                .then(res => res.json())
+                .then(data => alert(data.message || data.error));
+        }
+
+        function submitCode() {
+            let code = document.getElementById("codeInput").value;
+            let lang = document.getElementById("langSelect").value;
+            let formData = new FormData();
+            formData.append("code", code);
+            formData.append("lang", lang);
+
+            let selectedTestcases = Array.from(document.getElementById("testcaseSelect").selectedOptions).map(option => option.value);
+            formData.append("testcases", JSON.stringify(selectedTestcases));
+
+            fetch("/judge", { method: "POST", body: formData })
+                .then(res => res.json())
+                .then(data => {
+                    testResults = Object.entries(data);
+                    currentIndex = 0;
+                    updateResultDisplay();
+                });
+        }
+
+        function updateResultDisplay() {
+            if (testResults.length === 0) {
+                document.getElementById("resultOutput").innerText = "無測試結果";
+                return;
+            }
+            document.getElementById("resultOutput").innerText = `${testResults[currentIndex][0]}: ${testResults[currentIndex][1]}`;
+        }
+
+        function prevResult() {
+            if (currentIndex > 0) {
+                currentIndex--;
+                updateResultDisplay();
+            }
+        }
+
+        function nextResult() {
+            if (currentIndex < testResults.length - 1) {
+                currentIndex++;
+                updateResultDisplay();
+            }
+        }
+
+        function exportTestcases() {
+            fetch("/export", { method: "GET" })
+                .then(res => res.blob())
+                .then(blob => {
+                    let link = document.createElement("a");
+                    link.href = URL.createObjectURL(blob);
+                    link.download = "testcases.zip";
+                    link.click();
+                });
+        }
+
+        function importTestcases(event) {
+            let file = event.target.files[0];
+            if (!file) return;
+
+            let formData = new FormData();
+            formData.append("file", file);
+
+            fetch("/import", { method: "POST", body: formData })
+                .then(res => res.json())
+                .then(data => alert(data.message || data.error));
+        }
+
+        function deleteTestcase() {
+            let selectedTestcases = Array.from(document.getElementById("testcaseSelect").selectedOptions).map(option => option.value);
+            if (selectedTestcases.length === 0) {
+                alert("請選擇要刪除的測試資料");
+                return;
+            }
+
+            fetch("/delete", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ testcases: selectedTestcases })
+            })
+                .then(res => res.json())
+                .then(data => {
+                    alert(data.message || data.error);
+                    if (!data.error) {
+                        // 移除已刪除的選項
+                        let select = document.getElementById("testcaseSelect");
+                        selectedTestcases.forEach(testcase => {
+                            let option = select.querySelector(`option[value="${testcase}"]`);
+                            if (option) option.remove();
+                        });
+                    }
+                });
+        }
+
+        // 初始化測試資料選項
+        fetch("/testcases", { method: "GET" })
+            .then(res => res.json())
+            .then(files => {
+                let select = document.getElementById("testcaseSelect");
+                files.forEach(file => {
+                    let option = document.createElement("option");
+                    option.value = file;
+                    option.text = file;
+                    select.add(option);
+                });
+            });
+    </script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.7.1/jszip.min.js"></script>
+</body>
+</html>
