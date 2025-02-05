@@ -53,6 +53,7 @@
 - `GET /`：檢查伺服器狀態。
 - `POST /upload`：上傳測試資料。
 - `GET /testcases`：列出測試資料。
+- `GET /testcases/<name>`：取得特定測試資料。
 - `GET /export`：匯出測試資料。
 - `POST /import`：匯入測試資料。
 - `POST /delete`：刪除測試資料。
