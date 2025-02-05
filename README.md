@@ -6,7 +6,7 @@
 
 - `app.py`：後端伺服器的主要程式碼，處理各種 API 請求。
 - `index.html`：前端介面，提供使用者與系統互動的網頁。
-- `DockerFile`：用於建立 Docker 映像檔的設定檔。
+- `Dockerfile`：用於建立 Docker 映像檔的設定檔。
 - `README.md`：專案說明文件。
 
 ## 功能
@@ -29,7 +29,7 @@
 
 2. 啟動容器：
     ```sh
-    docker run -d -p 5000:5000 -v judge_testcases:/app/testcases --name judge simple-judge
+    docker run -d -p 5000:5000 -v judge_testcases:/app/testcases --name judge simple-code-judge
     ```
 
 3. 開啟瀏覽器並訪問 `http://localhost:5000` 使用前端介面。
