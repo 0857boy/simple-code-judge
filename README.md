@@ -29,7 +29,7 @@
 
 2. 啟動容器：
     ```sh
-    docker run -p 5000:5000 simple-code-judge
+    docker run -d -p 5000:5000 -v judge_testcases:/app/testcases --name judge simple-judge
     ```
 
 3. 開啟瀏覽器並訪問 `http://localhost:5000` 使用前端介面。
