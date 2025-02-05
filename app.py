@@ -100,8 +100,8 @@ def delete_testcases():
         return jsonify({"error": "請提供要刪除的測試資料"}), 400
 
     for testcase in testcases:
-        input_file = os.path.join(TESTCASE_DIR, testcase)
-        output_file = os.path.join(TESTCASE_DIR, testcase.replace(".in", ".out"))
+        input_file = os.path.join(TESTCASE_DIR, testcase + ".in")
+        output_file = os.path.join(TESTCASE_DIR, testcase + ".out")
         if os.path.exists(input_file):
             os.remove(input_file)
         if os.path.exists(output_file):

@@ -415,13 +415,18 @@
         }
 
         function deleteTestcase() {
-            showSpinner('deleteSpinner');
             let selectedTestcases = Array.from(document.getElementById("testcaseSelect").selectedOptions).map(option => option.value);
             if (selectedTestcases.length === 0) {
                 alert("請選擇要刪除的測試資料");
-                hideSpinner('deleteSpinner');
                 return;
             }
+
+            // 確認對話框
+            if (!confirm(`確定要刪除以下測試資料嗎？\n${selectedTestcases.join('\n')}`)) {
+                return;
+            }
+
+            showSpinner('deleteSpinner');
 
             fetch("/delete", {
                 method: "POST",
