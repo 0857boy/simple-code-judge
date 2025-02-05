@@ -46,6 +46,24 @@ def list_testcases():
     files = os.listdir(TESTCASE_DIR)
     return jsonify(files), 200
 
+@app.route("/testcases/<name>", methods=["GET"])
+def get_testcase(name):
+    input_filename = os.path.join(TESTCASE_DIR, f"{name}.in")
+    output_filename = os.path.join(TESTCASE_DIR, f"{name}.out")
+
+    if not os.path.exists(input_filename):
+        return jsonify({"error": "測試資料不存在"}), 404
+
+    with open(input_filename, "r") as f:
+        test_input = f.read()
+
+    test_output = ""
+    if os.path.exists(output_filename):
+        with open(output_filename, "r") as f:
+            test_output = f.read()
+
+    return jsonify({"input": test_input, "output": test_output}), 200
+
 # 匯出測試資料
 @app.route("/export", methods=["GET"])
 def export_testcases():
@@ -84,7 +102,7 @@ def delete_testcases():
         output_file = os.path.join(TESTCASE_DIR, testcase.replace(".in", ".out"))
         if os.path.exists(input_file):
             os.remove(input_file)
-        if (os.path.exists(output_file)):
+        if os.path.exists(output_file):
             os.remove(output_file)
 
     return jsonify({"message": "測試資料刪除成功"}), 200
@@ -115,6 +133,7 @@ def judge_code():
     # 取得測試資料
     inputs = sorted([f for f in os.listdir(TESTCASE_DIR) if f.endswith(".in")])
     results = {}
+    success_count = 0
 
     for input_file in inputs:
         output_file = input_file.replace(".in", ".out")
@@ -127,7 +146,11 @@ def judge_code():
                                     text=True, capture_output=True, shell=True, timeout=2)
             user_output = result.stdout.strip()
         except subprocess.TimeoutExpired:
-            results[input_file] = "執行時間過長"
+            results[input_file] = {
+                "user_output": "執行時間過長",
+                "expected_output": "",
+                "comparison_result": "未通過 ❌"
+            }
             continue
 
         # 讀取預期輸出
@@ -135,11 +158,24 @@ def judge_code():
 
         # 比對輸出
         if user_output == expected_output:
-            results[input_file] = "通過 ✅"
+            comparison_result = "通過 ✅"
+            success_count += 1
         else:
-            results[input_file] = f"錯誤 ❌ (預期: {expected_output} / 輸出: {user_output})"
+            comparison_result = "未通過 ❌"
 
-    return jsonify(results), 200
+        results[input_file] = {
+            "user_output": user_output,
+            "expected_output": expected_output,
+            "comparison_result": comparison_result
+        }
+
+    total_count = len(inputs)
+    summary = {
+        "success_count": success_count,
+        "total_count": total_count
+    }
+
+    return jsonify({"results": results, "summary": summary}), 200
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5000, debug=True)

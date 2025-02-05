@@ -31,8 +31,8 @@
             margin: 20px 0;
             border-radius: 8px;
             box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-            width: 80%;
-            max-width: 800px;
+            width: 90%;
+            max-width: 1000px;
             transition: transform 0.3s ease, box-shadow 0.3s ease;
         }
         .container:hover {
@@ -76,14 +76,15 @@
         .carousel-container {
             display: flex;
             align-items: center;
-            justify-content: center;
+            justify-content: space-between;
             margin-top: 20px;
         }
         .carousel {
-            width: 500px;
-            height: 200px;
+            width: 600px;
+            height: auto;
             border: 1px solid #000;
             display: flex;
+            flex-direction: column;
             justify-content: center;
             align-items: center;
             font-size: 18px;
@@ -91,6 +92,7 @@
             border-radius: 8px;
             box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
             transition: transform 0.3s ease;
+            padding: 20px;
         }
         .carousel-container button {
             background-color: #007BFF;
@@ -139,6 +141,7 @@
             <button onclick="loadTestcase()">載入</button>
             <button onclick="deleteTestcase()">刪除</button>
             <div id="deleteSpinner" class="spinner"></div>
+            <div id="loadedTestcases"></div>
         </div>
     </div>
 
@@ -162,8 +165,17 @@
         <div class="content">
             <div class="carousel-container">
                 <button onclick="prevResult()">&#9664;</button>
-                <div id="resultOutput" class="carousel">等待測試結果...</div>
+                <div id="resultOutput" class="carousel">
+                    <h3 id="resultTitle">等待測試結果...</h3>
+                    <p><strong>測試結果:</strong> <span id="comparisonResult"></span></p>
+                    <p><strong>你的輸出:</strong> <textarea id="userOutput" rows="4" cols="50" readonly></textarea></p>
+                    <p><strong>預期輸出:</strong> <textarea id="expectedOutput" rows="4" cols="50" readonly></textarea></p>
+                </div>
                 <button onclick="nextResult()">&#9654;</button>
+            </div>
+            <div id="testSummary">
+                <p><strong>成功數量:</strong> <span id="successCount"></span></p>
+                <p><strong>總數量:</strong> <span id="totalCount"></span></p>
             </div>
         </div>
     </div>
@@ -238,10 +250,27 @@
 
         function updateResultDisplay() {
             if (testResults.length === 0) {
-                document.getElementById("resultOutput").innerText = "無測試結果";
+                document.getElementById("resultTitle").innerText = "無測試結果";
+                document.getElementById("userOutput").value = "";
+                document.getElementById("expectedOutput").value = "";
+                document.getElementById("comparisonResult").innerText = "";
+                document.getElementById("successCount").innerText = "0";
+                document.getElementById("totalCount").innerText = "0";
                 return;
             }
-            document.getElementById("resultOutput").innerText = `${testResults[currentIndex][0]}: ${testResults[currentIndex][1]}`;
+
+            const [filename, result] = testResults[currentIndex];
+            const [userOutput, expectedOutput] = result.split(" / ");
+            const isSuccess = userOutput === expectedOutput;
+
+            document.getElementById("resultTitle").innerText = filename;
+            document.getElementById("userOutput").value = userOutput ? userOutput.replace("輸出: ", "") : "";
+            document.getElementById("expectedOutput").value = expectedOutput ? expectedOutput.replace("預期: ", "") : "";
+            document.getElementById("comparisonResult").innerText = isSuccess ? "通過 ✅" : "未通過 ❌";
+
+            const successCount = testResults.filter(([_, result]) => result.includes("通過 ✅")).length;
+            document.getElementById("successCount").innerText = successCount;
+            document.getElementById("totalCount").innerText = testResults.length;
         }
 
         function prevResult() {
@@ -315,6 +344,47 @@
                     }
                     hideSpinner('deleteSpinner');
                 });
+        }
+
+        function loadTestcase() {
+            let selectedTestcases = Array.from(document.getElementById("testcaseSelect").selectedOptions).map(option => option.value);
+            if (selectedTestcases.length === 0) {
+                alert("請選擇要載入的測試資料");
+                return;
+            }
+
+            let loadedTestcasesDiv = document.getElementById("loadedTestcases");
+            loadedTestcasesDiv.innerHTML = ''; // 清空之前的內容
+
+            selectedTestcases.forEach(testcase => {
+                fetch(`/testcases/${testcase}`, { method: "GET" })
+                    .then(res => res.json())
+                    .then(data => {
+                        let testcaseDiv = document.createElement("div");
+                        testcaseDiv.className = "testcase";
+
+                        let testName = document.createElement("p");
+                        testName.innerText = `檔名: ${testcase}`;
+
+                        let testInput = document.createElement("textarea");
+                        testInput.rows = 4;
+                        testInput.cols = 50;
+                        testInput.value = data.input;
+                        testInput.readOnly = true;
+
+                        let testOutput = document.createElement("textarea");
+                        testOutput.rows = 4;
+                        testOutput.cols = 50;
+                        testOutput.value = data.output;
+                        testOutput.readOnly = true;
+
+                        testcaseDiv.appendChild(testName);
+                        testcaseDiv.appendChild(testInput);
+                        testcaseDiv.appendChild(testOutput);
+
+                        loadedTestcasesDiv.appendChild(testcaseDiv);
+                    });
+            });
         }
 
         function refreshTestcaseOptions() {
