@@ -3,6 +3,7 @@ import subprocess
 from flask import Flask, request, jsonify, send_file
 from flask_cors import CORS
 import zipfile
+import io
 
 app = Flask(__name__)
 CORS(app)
@@ -66,13 +67,15 @@ def get_testcase(name):
 # 匯出測試資料
 @app.route("/export", methods=["GET"])
 def export_testcases():
-    zip_path = os.path.join(TESTCASE_DIR, "testcases.zip")
-    with zipfile.ZipFile(zip_path, 'w') as zipf:
+    memory_file = io.BytesIO()
+    with zipfile.ZipFile(memory_file, 'w') as zipf:
         for root, _, files in os.walk(TESTCASE_DIR):
             for file in files:
                 file_path = os.path.join(root, file)
                 zipf.write(file_path, os.path.relpath(file_path, TESTCASE_DIR))
-    return send_file(zip_path, as_attachment=True)
+    memory_file.seek(0)
+    return send_file(memory_file, as_attachment=True, download_name="testcases.zip")
+
 
 # 匯入測試資料
 @app.route("/import", methods=["POST"])
@@ -146,9 +149,9 @@ def judge_code():
         try:
             result = subprocess.run(exec_cmd, input=open(input_path).read(),
                                     text=True, capture_output=True, shell=True, timeout=5)
-            user_output = result.stdout.strip()
+            user_output = result.stdout
             if result.returncode != 0:
-                user_output += f"\n錯誤: {result.stderr.strip()}"
+                user_output += f"\n錯誤: {result.stderr}"
         except subprocess.TimeoutExpired:
             results[input_file] = {
                 "user_output": "執行時間過長",
@@ -157,7 +160,7 @@ def judge_code():
             }
             continue
         except subprocess.CalledProcessError as e:
-            user_output = f"執行錯誤: {e.stderr.strip()}"
+            user_output = f"執行錯誤: {e.stderr}"
             results[input_file] = {
                 "user_output": user_output,
                 "expected_output": "",
@@ -166,10 +169,10 @@ def judge_code():
             continue
 
         # 讀取預期輸出
-        expected_output = open(output_path).read().strip() if os.path.exists(output_path) else "無預期輸出"
+        expected_output = open(output_path).read() if os.path.exists(output_path) else "無預期輸出"
 
         # 比對輸出
-        if user_output == expected_output:
+        if user_output.rstrip() == expected_output.rstrip():
             comparison_result = "通過 ✅"
             success_count += 1
         else:

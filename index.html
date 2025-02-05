@@ -32,7 +32,6 @@
             border-radius: 8px;
             box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
             width: 90%;
-            max-width: 1000px;
             transition: transform 0.3s ease, box-shadow 0.3s ease;
         }
         .container:hover {
@@ -104,9 +103,10 @@
             justify-content: center;
             align-items: center;
             margin-top: 20px;
+            width: 100%; 
         }
         .carousel {
-            width: 600px;
+            width: 95%;
             height: auto;
             border: 1px solid #000;
             display: flex;
@@ -178,11 +178,11 @@
     </div>
 
     <div class="container">
-        <h2 onclick="toggleContent(this)">選取測試資料</h2>
+        <h2 onclick="toggleContent(this)">管理測試資料</h2>
         <div class="content">
             <select id="testcaseSelect" multiple></select>
-            <button onclick="loadTestcase()">載入</button>
-            <button onclick="deleteTestcase()">刪除</button>
+            <button onclick="loadTestcase()">預覽測試資料</button>
+            <button onclick="deleteTestcase()">刪除測試資料</button>
             <div id="deleteSpinner" class="spinner"></div>
             <div id="loadedTestcases"></div>
         </div>
@@ -212,11 +212,11 @@
                     <div class="output-container">
                         <div class="output-box">
                             <p><strong>程式輸出:</strong></p>
-                            <div id="userOutput" class="output"></div>
+                            <div id="userOutput" class="output" style="white-space: pre-wrap;"></div>
                         </div>
                         <div class="output-box">
                             <p><strong>預期輸出:</strong></p>
-                            <div id="expectedOutput" class="output"></div>
+                            <div id="expectedOutput" class="output" style="white-space: pre-wrap;"></div>
                         </div>
                     </div>
                     <p><strong>測試結果:</strong> <span id="comparisonResult"></span></p>
@@ -241,7 +241,6 @@
             <button onclick="document.getElementById('importFile').click()">匯入測試資料</button>
             <div id="exportSpinner" class="spinner"></div>
             <div id="importSpinner" class="spinner"></div>
-            <div id="exportedTestcases"></div>
         </div>
     </div>
 
