@@ -73,10 +73,36 @@
         button:hover {
             background-color: #0056b3;
         }
+        .button-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-top: 10px;
+        }
+
+        .button-container button {
+            background-color: #007BFF;
+            color: #fff;
+            border: none;
+            cursor: pointer;
+            padding: 10px;
+            margin: 0 10px;
+            border-radius: 50%;
+            transition: background-color 0.3s ease;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .button-container button:hover {
+            background-color: #0056b3;
+        }
         .carousel-container {
             display: flex;
+            justify-content: center;
             align-items: center;
-            justify-content: space-between;
             margin-top: 20px;
         }
         .carousel {
@@ -120,7 +146,24 @@
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
         }
+        .highlight {
+            background-color: #ffdddd;
+        }
+        .output-container {
+            display: flex;
+            justify-content: space-between;
+            width: 100%;
+        }
+        .output-box {
+            width: 48%;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            padding: 10px;
+            background-color: #fff;
+            text-align: left;
+        }
     </style>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/diff_match_patch/20121119/diff_match_patch.js"></script>
 </head>
 <body>
     <div class="container">
@@ -164,13 +207,23 @@
         <h2 onclick="toggleContent(this)">測試結果</h2>
         <div class="content">
             <div class="carousel-container">
-                <button onclick="prevResult()">&#9664;</button>
                 <div id="resultOutput" class="carousel">
                     <h3 id="resultTitle">等待測試結果...</h3>
+                    <div class="output-container">
+                        <div class="output-box">
+                            <p><strong>程式輸出:</strong></p>
+                            <div id="userOutput" class="output"></div>
+                        </div>
+                        <div class="output-box">
+                            <p><strong>預期輸出:</strong></p>
+                            <div id="expectedOutput" class="output"></div>
+                        </div>
+                    </div>
                     <p><strong>測試結果:</strong> <span id="comparisonResult"></span></p>
-                    <p><strong>你的輸出:</strong> <textarea id="userOutput" rows="4" cols="50" readonly></textarea></p>
-                    <p><strong>預期輸出:</strong> <textarea id="expectedOutput" rows="4" cols="50" readonly></textarea></p>
                 </div>
+            </div>
+            <div class="button-container">
+                <button onclick="prevResult()">&#9664;</button>
                 <button onclick="nextResult()">&#9654;</button>
             </div>
             <div id="testSummary">
@@ -186,7 +239,9 @@
             <button onclick="exportTestcases()">匯出測試資料</button>
             <input type="file" id="importFile" style="display:none" onchange="importTestcases(event)">
             <button onclick="document.getElementById('importFile').click()">匯入測試資料</button>
+            <div id="exportSpinner" class="spinner"></div>
             <div id="importSpinner" class="spinner"></div>
+            <div id="exportedTestcases"></div>
         </div>
     </div>
 
@@ -241,7 +296,7 @@
             fetch("/judge", { method: "POST", body: formData })
                 .then(res => res.json())
                 .then(data => {
-                    testResults = Object.entries(data);
+                    testResults = Object.entries(data.results); // 只取 results 部分
                     currentIndex = 0;
                     updateResultDisplay();
                     hideSpinner('submitSpinner');
@@ -251,8 +306,8 @@
         function updateResultDisplay() {
             if (testResults.length === 0) {
                 document.getElementById("resultTitle").innerText = "無測試結果";
-                document.getElementById("userOutput").value = "";
-                document.getElementById("expectedOutput").value = "";
+                document.getElementById("userOutput").innerHTML = "";
+                document.getElementById("expectedOutput").innerHTML = "";
                 document.getElementById("comparisonResult").innerText = "";
                 document.getElementById("successCount").innerText = "0";
                 document.getElementById("totalCount").innerText = "0";
@@ -260,17 +315,60 @@
             }
 
             const [filename, result] = testResults[currentIndex];
-            const [userOutput, expectedOutput] = result.split(" / ");
-            const isSuccess = userOutput === expectedOutput;
+            if (typeof result !== 'object') {
+                console.error(`Unexpected result type: ${typeof result}`);
+                return;
+            }
+
+            const { user_output: userOutput, expected_output: expectedOutput, comparison_result: comparisonResult } = result;
 
             document.getElementById("resultTitle").innerText = filename;
-            document.getElementById("userOutput").value = userOutput ? userOutput.replace("輸出: ", "") : "";
-            document.getElementById("expectedOutput").value = expectedOutput ? expectedOutput.replace("預期: ", "") : "";
-            document.getElementById("comparisonResult").innerText = isSuccess ? "通過 ✅" : "未通過 ❌";
+            document.getElementById("userOutput").innerHTML = userOutput || "";
+            document.getElementById("expectedOutput").innerHTML = expectedOutput || "";
+            document.getElementById("comparisonResult").innerText = comparisonResult;
 
-            const successCount = testResults.filter(([_, result]) => result.includes("通過 ✅")).length;
+            const successCount = testResults.filter(([_, result]) => result.comparison_result === "通過 ✅").length;
             document.getElementById("successCount").innerText = successCount;
             document.getElementById("totalCount").innerText = testResults.length;
+
+            highlightDifferences(userOutput, expectedOutput);
+        }
+
+        function highlightDifferences(userOutput, expectedOutput) {
+            const userOutputElement = document.getElementById("userOutput");
+            const expectedOutputElement = document.getElementById("expectedOutput");
+
+            userOutputElement.classList.remove("highlight");
+            expectedOutputElement.classList.remove("highlight");
+
+            if (userOutput !== expectedOutput) {
+                const dmp = new diff_match_patch();
+                const diff = dmp.diff_main(expectedOutput, userOutput);
+                dmp.diff_cleanupSemantic(diff);
+
+                let userOutputHtml = '';
+                let expectedOutputHtml = '';
+
+                diff.forEach(part => {
+                    const color = part[0] === 1 ? 'background-color: #ffdddd;' :
+                                part[0] === -1 ? 'background-color: #ddffdd;' : '';
+
+                    if (part[0] === 1) {
+                        userOutputHtml += `<span style="${color}">${part[1].replace(/\n/g, '<br>')}</span>`;
+                    } else if (part[0] === -1) {
+                        expectedOutputHtml += `<span style="${color}">${part[1].replace(/\n/g, '<br>')}</span>`;
+                    } else {
+                        userOutputHtml += part[1].replace(/\n/g, '<br>');
+                        expectedOutputHtml += part[1].replace(/\n/g, '<br>');
+                    }
+                });
+
+                userOutputElement.innerHTML = userOutputHtml;
+                expectedOutputElement.innerHTML = expectedOutputHtml;
+            } else {
+                userOutputElement.innerHTML = userOutput.replace(/\n/g, '<br>');
+                expectedOutputElement.innerHTML = expectedOutput.replace(/\n/g, '<br>');
+            }
         }
 
         function prevResult() {
@@ -292,21 +390,20 @@
             fetch("/export", { method: "GET" })
                 .then(res => res.blob())
                 .then(blob => {
-                    let link = document.createElement("a");
-                    link.href = URL.createObjectURL(blob);
-                    link.download = "testcases.zip";
-                    link.click();
                     hideSpinner('exportSpinner');
+                    saveAs(blob, "testcases.zip");
                 });
         }
 
         function importTestcases(event) {
             showSpinner('importSpinner');
-            let file = event.target.files[0];
-            if (!file) return;
+            let files = event.target.files;
+            if (!files.length) return;
 
             let formData = new FormData();
-            formData.append("file", file);
+            for (let file of files) {
+                formData.append("files", file);
+            }
 
             fetch("/import", { method: "POST", body: formData })
                 .then(res => res.json())
@@ -407,5 +504,6 @@
         refreshTestcaseOptions();
     </script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.7.1/jszip.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
 </body>
 </html>
