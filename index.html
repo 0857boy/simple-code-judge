@@ -304,13 +304,20 @@
             let selectedTestcases = Array.from(document.getElementById("testcaseSelect").selectedOptions).map(option => option.value);
             formData.append("testcases", JSON.stringify(selectedTestcases));
             
-            
             fetch("/judge", { method: "POST", body: formData })
                 .then(res => res.json())
                 .then(data => {
+                    if (!data.results) {
+                        throw new Error("No results found in response");
+                    }
                     testResults = Object.entries(data.results); // 只取 results 部分
                     currentIndex = 0;
                     updateResultDisplay();
+                    hideSpinner('submitSpinner');
+                })
+                .catch(error => {
+                    console.error("Error:", error);
+                    alert("提交程式碼時發生錯誤，請稍後再試。");
                     hideSpinner('submitSpinner');
                 });
         }
