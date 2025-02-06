@@ -341,7 +341,7 @@
 
             const { user_output: userOutput, expected_output: expectedOutput, comparison_result: comparisonResult } = result;
 
-            document.getElementById("resultTitle").innerText = filename;
+            document.getElementById("resultTitle").innerText = `${filename} (${currentIndex + 1}/${testResults.length})`;
             document.getElementById("userOutput").innerHTML = userOutput || "";
             document.getElementById("expectedOutput").innerHTML = expectedOutput || "";
             document.getElementById("comparisonResult").innerText = comparisonResult;
@@ -351,7 +351,6 @@
             document.getElementById("totalCount").innerText = testResults.length;
 
             highlightDifferences(userOutput, expectedOutput);
-
         }
 
         function highlightDifferences(userOutput, expectedOutput) {

@@ -172,8 +172,10 @@ def judge_code():
         expected_output = open(output_path).read() if os.path.exists(output_path) else "無預期輸出"
 
         # 比對輸出
-        if user_output.rstrip() == expected_output.rstrip():
+        if user_output.strip() == expected_output.strip():
             comparison_result = "通過 ✅"
+            user_output = user_output.strip()
+            expected_output = expected_output.strip()
             success_count += 1
         else:
             comparison_result = "未通過 ❌"
