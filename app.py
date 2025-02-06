@@ -88,10 +88,10 @@ def import_testcases():
         return jsonify({"error": "檔案無效"}), 400
 
     for file in files:
-        filename = file.filename
-        file_path = os.path.join(TESTCASE_DIR, filename)
-        os.makedirs(os.path.dirname(file_path), exist_ok=True)
-        file.save(file_path)
+        filename = os.path.basename(file.filename)
+        if filename.endswith('.in') or filename.endswith('.out'):
+            file_path = os.path.join(TESTCASE_DIR, filename)
+            file.save(file_path)
 
     return jsonify({"message": "測試資料匯入成功"}), 200
 
