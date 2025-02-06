@@ -187,24 +187,32 @@
 </head>
 <body>
     <div class="container">
-        <h2 onclick="toggleContent(this)">新增測試資料</h2>
+        <h2 onclick="toggleContent(this)">測試資料管理</h2>
         <div class="content">
-            命名新測試檔名 (不包含副檔名): <input type="text" id="testName"><br>
-            輸入內容 (.in): <textarea id="testInput" rows="4" cols="50"></textarea><br>
-            預期輸出 (.out): <textarea id="testOutput" rows="4" cols="50"></textarea><br>
-            <button onclick="uploadTestcase()">上傳</button>
-            <div id="uploadSpinner" class="spinner"></div>
-        </div>
-    </div>
-
-    <div class="container">
-        <h2 onclick="toggleContent(this)">管理測試資料</h2>
-        <div class="content">
-            <select id="testcaseSelect" multiple></select>
-            <button onclick="loadTestcase()">預覽測試資料</button>
-            <button onclick="deleteTestcase()">刪除測試資料</button>
-            <div id="deleteSpinner" class="spinner"></div>
-            <div id="loadedTestcases"></div>
+            <div>
+                <h3>新增測試資料</h3>
+                命名新測試檔名 (不包含副檔名): <input type="text" id="testName"><br>
+                輸入內容 (.in): <textarea id="testInput" rows="4" cols="50"></textarea><br>
+                預期輸出 (.out): <textarea id="testOutput" rows="4" cols="50"></textarea><br>
+                <button onclick="uploadTestcase()">上傳</button>
+                <div id="uploadSpinner" class="spinner"></div>
+            </div>
+            <div>
+                <h3>管理測試資料</h3>
+                <select id="testcaseSelect" multiple></select>
+                <button onclick="loadTestcase()">預覽測試資料</button>
+                <button onclick="deleteTestcase()">刪除測試資料</button>
+                <div id="deleteSpinner" class="spinner"></div>
+                <div id="loadedTestcases"></div>
+            </div>
+            <div>
+                <h3>匯出/匯入測試資料夾</h3>
+                <button onclick="exportTestcases()">匯出(zip)</button>
+                <input type="file" id="importFile" webkitdirectory style="display:none" onchange="importTestcases(event)">
+                <button onclick="document.getElementById('importFile').click()">匯入(dir)</button>
+                <div id="exportSpinner" class="spinner"></div>
+                <div id="importSpinner" class="spinner"></div>
+            </div>
         </div>
     </div>
 
@@ -223,45 +231,29 @@
         </div>
     </div>
 
-    <div class="container">
-        <h2 onclick="toggleContent(this)">測試結果</h2>
-        <div class="content">
-            <div class="carousel-container">
-                <div id="resultOutput" class="carousel">
-                    <h3 id="resultTitle">等待測試結果...</h3>
-                    <div class="output-container">
-                        <div class="output-box">
-                            <p><strong>程式輸出:</strong></p>
-                            <div id="userOutput" class="output" style="white-space: pre-wrap;"></div>
-                        </div>
-                        <div class="output-box">
-                            <p><strong>預期輸出:</strong></p>
-                            <div id="expectedOutput" class="output" style="white-space: pre-wrap;"></div>
-                        </div>
-                    </div>
-                    <p><strong>測試結果:</strong> <span id="comparisonResult"></span></p>
+    <div class="carousel-container">
+        <div id="resultOutput" class="carousel">
+            <h3 id="resultTitle">等待測試結果...</h3>
+            <div class="output-container">
+                <div class="output-box">
+                    <p><strong>程式輸出:</strong></p>
+                    <div id="userOutput" class="output" style="white-space: pre-wrap;"></div>
+                </div>
+                <div class="output-box">
+                    <p><strong>預期輸出:</strong></p>
+                    <div id="expectedOutput" class="output" style="white-space: pre-wrap;"></div>
                 </div>
             </div>
-            <div class="button-container">
-                <button onclick="prevResult()">&#9664;</button>
-                <button onclick="nextResult()">&#9654;</button>
-            </div>
-            <div id="testSummary">
-                <p><strong>成功數量:</strong> <span id="successCount"></span></p>
-                <p><strong>總數量:</strong> <span id="totalCount"></span></p>
-            </div>
+            <p><strong>測試結果:</strong> <span id="comparisonResult"></span></p>
         </div>
     </div>
-
-    <div class="container">
-        <h2 onclick="toggleContent(this)">匯出/匯入測試資料</h2>
-        <div class="content">
-            <button onclick="exportTestcases()">匯出測試資料</button>
-            <input type="file" id="importFile" webkitdirectory style="display:none" onchange="importTestcases(event)">
-            <button onclick="document.getElementById('importFile').click()">匯入測試資料</button>
-            <div id="exportSpinner" class="spinner"></div>
-            <div id="importSpinner" class="spinner"></div>
-        </div>
+    <div class="button-container">
+        <button onclick="prevResult()">&#9664;</button>
+        <button onclick="nextResult()">&#9654;</button>
+    </div>
+    <div id="testSummary">
+        <p><strong>成功數量:</strong> <span id="successCount"></span></p>
+        <p><strong>總數量:</strong> <span id="totalCount"></span></p>
     </div>
 
     <script>
