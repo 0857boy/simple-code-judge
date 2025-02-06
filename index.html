@@ -515,7 +515,8 @@
                     let select = document.getElementById("testcaseSelect");
                     select.innerHTML = ''; // 清空選項
                     let uniqueFiles = new Set(files.map(file => file.replace(/\.(in|out)$/, '')));
-                    uniqueFiles.forEach(file => {
+                    let sortedFiles = Array.from(uniqueFiles).sort(); // 按名字排序
+                    sortedFiles.forEach(file => {
                         let option = document.createElement("option");
                         option.value = file;
                         option.text = file;
