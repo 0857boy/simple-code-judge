@@ -76,7 +76,6 @@ def export_testcases():
     memory_file.seek(0)
     return send_file(memory_file, as_attachment=True, download_name="testcases.zip")
 
-
 # 匯入測試資料
 @app.route("/import", methods=["POST"])
 def import_testcases():
@@ -124,16 +123,26 @@ def judge_code():
     # 儲存程式碼
     if lang == "cpp":
         code_file = "main.cpp"
-        exec_cmd = "g++ main.cpp -o main && ./main"
+        exec_cmd = ["g++", "main.cpp", "-o", "main"]
+        run_cmd = ["./main"]
     elif lang == "java":
         code_file = "Main.java"
-        exec_cmd = "javac Main.java && java Main"
+        exec_cmd = ["javac", "Main.java"]
+        run_cmd = ["java", "Main"]
     else:
         code_file = "main.py"
-        exec_cmd = "python3 main.py"
+        exec_cmd = ["python3", "main.py"]
+        run_cmd = ["python3", "main.py"]
 
     with open(f"/app/{code_file}", "w") as f:
         f.write(code)
+
+    # 編譯程式碼 (如果需要)
+    if lang in ["cpp", "java"]:
+        try:
+            subprocess.run(exec_cmd, check=True, capture_output=True, text=True)
+        except subprocess.CalledProcessError as e:
+            return jsonify({"error": f"編譯錯誤: {e.stderr}"}), 400
 
     # 取得測試資料
     inputs = sorted([f for f in os.listdir(TESTCASE_DIR) if f.endswith(".in")])
@@ -147,8 +156,8 @@ def judge_code():
 
         # 執行程式
         try:
-            result = subprocess.run(exec_cmd, input=open(input_path).read(),
-                                    text=True, capture_output=True, shell=True, timeout=5)
+            result = subprocess.run(run_cmd, input=open(input_path).read(),
+                                    text=True, capture_output=True, timeout=5)
             user_output = result.stdout
             if result.returncode != 0:
                 user_output += f"\n錯誤: {result.stderr}"
