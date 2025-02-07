@@ -1,6 +1,6 @@
 import os
 import subprocess
-from flask import Flask, request, jsonify, send_file
+from flask import Flask, request, jsonify, send_file, send_from_directory
 from flask_cors import CORS
 import zipfile
 import io
@@ -17,6 +17,11 @@ os.makedirs(TESTCASE_DIR, exist_ok=True)
 @app.route("/")
 def home():
     return send_file('index.html')
+
+# 提供靜態資源
+@app.route('/favicons_io/<path:filename>')
+def static_files(filename):
+    return send_from_directory('favicons_io', filename)
 
 # 上傳測試資料 (支援 .in 和 .out 檔案)
 @app.route("/upload", methods=["POST"])

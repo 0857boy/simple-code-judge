@@ -12,6 +12,9 @@ RUN pip install flask flask-cors gunicorn
 # 複製程式碼
 COPY app.py /app/app.py
 
+# 複製 favicon_io 資料夾
+COPY favicons_io /app/favicons_io
+
 # 複製網頁
 COPY index.html /app/index.html
 
