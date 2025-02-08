@@ -23,25 +23,18 @@
 ### 使用 Docker 執行
 
 1. 拉取並啟動容器：
-    ```sh
-    docker run -d -p 5000:5000 -v judge_testcases:/app/testcases --name judge ghcr.io/0857boy/simple-code-judge:latest
-    ```
 
+    - 僅允許本機(localhost)使用
+        ```sh
+        docker run -d -p 127.0.0.1:5000:5000 -v judge_testcases:/app/testcases --name judge ghcr.io/0857boy/simple-code-judge:latest
+        ```
+    - 供外部連線使用
+        ```sh
+        docker run -d -p 5000:5000 -v judge_testcases:/app/testcases --name judge ghcr.io/0857boy/simple-code-judge:latest
+        ```
 2. 開啟瀏覽器並訪問 `http://localhost:5000` 使用前端介面。
 
-### 手動執行
 
-1. 安裝所需套件：
-    ```sh
-    pip install flask flask-cors
-    ```
-
-2. 啟動 Flask 伺服器：
-    ```sh
-    python app.py
-    ```
-
-3. 開啟瀏覽器並訪問 `http://localhost:5000` 使用前端介面。
 
 ## API 端點
 
