@@ -189,6 +189,31 @@
             background-color: #fff;
             text-align: left;
         }
+
+        .result-container {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            width: 100%;
+        }
+
+        .button-container {
+            display: flex;
+            align-items: center;
+        }
+
+        .button-container button {
+            margin: 0 5px;
+        }
+
+        #testSummary {
+            display: flex;
+            align-items: center;
+        }
+
+        #testSummary p {
+            margin: 0 10px;
+        }
     </style>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/diff_match_patch/20121119/diff_match_patch.js"></script>
 </head>
@@ -241,6 +266,17 @@
     <div class="carousel-container">
         <div id="resultOutput" class="carousel">
             <h3 id="resultTitle">等待測試結果...</h3>
+            <div class="result-container">
+                <div class="button-container">
+                    <button onclick="prevResult()">&#9664;</button>
+                    <button onclick="nextResult()">&#9654;</button>
+                </div>
+                <p><strong>測試結果:</strong> <span id="comparisonResult"></span></p>
+                <div id="testSummary">
+                    <p><strong>通過數量:</strong> <span id="successCount"></span></p>
+                    <p><strong>總數量:</strong> <span id="totalCount"></span></p>
+                </div>
+            </div>
             <div class="output-container">
                 <div class="output-box">
                     <p><strong>程式輸出:</strong></p>
@@ -251,17 +287,9 @@
                     <div id="expectedOutput" class="output" style="white-space: pre-wrap;"></div>
                 </div>
             </div>
-            <p><strong>測試結果:</strong> <span id="comparisonResult"></span></p>
         </div>
     </div>
-    <div class="button-container">
-        <button onclick="prevResult()">&#9664;</button>
-        <button onclick="nextResult()">&#9654;</button>
-    </div>
-    <div id="testSummary">
-        <p><strong>通過數量:</strong> <span id="successCount"></span></p>
-        <p><strong>總數量:</strong> <span id="totalCount"></span></p>
-    </div>
+    
 
     <script>
         function toggleContent(element) {
