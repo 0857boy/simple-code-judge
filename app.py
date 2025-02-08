@@ -116,7 +116,8 @@ def delete_testcases():
 
     return jsonify({"message": "測試資料刪除成功"}), 200
 
-# 執行測試 (判斷語言後執行)
+import tempfile
+
 @app.route("/judge", methods=["POST"])
 def judge_code():
     code = request.form.get("code")
@@ -125,88 +126,90 @@ def judge_code():
     if not code or lang not in ["cpp", "java", "python"]:
         return jsonify({"error": "請提供程式碼和語言 (cpp, java, python)"}), 400
 
-    # 儲存程式碼
-    if lang == "cpp":
-        code_file = "main.cpp"
-        exec_cmd = ["g++", "main.cpp", "-o", "main"]
-        run_cmd = ["./main"]
-    elif lang == "java":
-        code_file = "Main.java"
-        exec_cmd = ["javac", "Main.java"]
-        run_cmd = ["java", "Main"]
-    else:
-        code_file = "main.py"
-        exec_cmd = ["python3", "main.py"]
-        run_cmd = ["python3", "main.py"]
+    # 建立臨時目錄
+    with tempfile.TemporaryDirectory() as temp_dir:
+        # 儲存程式碼
+        if lang == "cpp":
+            code_file = os.path.join(temp_dir, "main.cpp")
+            exec_cmd = ["g++", "main.cpp", "-o", "main"]
+            run_cmd = ["./main"]
+        elif lang == "java":
+            code_file = os.path.join(temp_dir, "Main.java")
+            exec_cmd = ["javac", "Main.java"]
+            run_cmd = ["java", "Main"]
+        else:
+            code_file = os.path.join(temp_dir, "main.py")
+            exec_cmd = ["python3", "main.py"]
+            run_cmd = ["python3", "main.py"]
 
-    with open(f"/app/{code_file}", "w") as f:
-        f.write(code)
+        with open(code_file, "w") as f:
+            f.write(code)
 
-    # 編譯程式碼 (如果需要)
-    if lang in ["cpp", "java"]:
-        try:
-            subprocess.run(exec_cmd, check=True, capture_output=True, text=True)
-        except subprocess.CalledProcessError as e:
-            return jsonify({"error": f"編譯錯誤: {e.stderr}"}), 400
+        # 編譯程式碼 (如果需要)
+        if lang in ["cpp", "java"]:
+            try:
+                subprocess.run(exec_cmd, check=True, capture_output=True, text=True, cwd=temp_dir)
+            except subprocess.CalledProcessError as e:
+                return jsonify({"error": f"編譯錯誤: {e.stderr}"}), 400
 
-    # 取得測試資料
-    inputs = sorted([f for f in os.listdir(TESTCASE_DIR) if f.endswith(".in")])
-    results = {}
-    success_count = 0
+        # 取得測試資料
+        inputs = sorted([f for f in os.listdir(TESTCASE_DIR) if f.endswith(".in")])
+        results = {}
+        success_count = 0
 
-    for input_file in inputs:
-        output_file = input_file.replace(".in", ".out")
-        input_path = os.path.join(TESTCASE_DIR, input_file)
-        output_path = os.path.join(TESTCASE_DIR, output_file)
+        for input_file in inputs:
+            output_file = input_file.replace(".in", ".out")
+            input_path = os.path.join(TESTCASE_DIR, input_file)
+            output_path = os.path.join(TESTCASE_DIR, output_file)
 
-        # 執行程式
-        try:
-            result = subprocess.run(run_cmd, input=open(input_path).read(),
-                                    text=True, capture_output=True, timeout=5)
-            user_output = result.stdout
-            if result.returncode != 0:
-                user_output += f"\n錯誤: {result.stderr}"
-        except subprocess.TimeoutExpired:
-            results[input_file] = {
-                "user_output": "執行時間過長",
-                "expected_output": "",
-                "comparison_result": "未通過 ❌"
-            }
-            continue
-        except subprocess.CalledProcessError as e:
-            user_output = f"執行錯誤: {e.stderr}"
+            # 執行程式
+            try:
+                result = subprocess.run(run_cmd, input=open(input_path).read(),
+                                        text=True, capture_output=True, timeout=3, cwd=temp_dir)
+                user_output = result.stdout
+                if result.returncode != 0:
+                    user_output += f"\n錯誤: {result.stderr}"
+            except subprocess.TimeoutExpired:
+                results[input_file] = {
+                    "user_output": "執行時間過長",
+                    "expected_output": "",
+                    "comparison_result": "未通過 ❌"
+                }
+                continue
+            except subprocess.CalledProcessError as e:
+                user_output = f"執行錯誤: {e.stderr}"
+                results[input_file] = {
+                    "user_output": user_output,
+                    "expected_output": "",
+                    "comparison_result": "未通過 ❌"
+                }
+                continue
+
+            # 讀取預期輸出
+            expected_output = open(output_path).read() if os.path.exists(output_path) else "無預期輸出"
+
+            # 比對輸出
+            if user_output.strip() == expected_output.strip():
+                comparison_result = "通過 ✅"
+                user_output = user_output.strip()
+                expected_output = expected_output.strip()
+                success_count += 1
+            else:
+                comparison_result = "未通過 ❌"
+
             results[input_file] = {
                 "user_output": user_output,
-                "expected_output": "",
-                "comparison_result": "未通過 ❌"
+                "expected_output": expected_output,
+                "comparison_result": comparison_result
             }
-            continue
 
-        # 讀取預期輸出
-        expected_output = open(output_path).read() if os.path.exists(output_path) else "無預期輸出"
-
-        # 比對輸出
-        if user_output.strip() == expected_output.strip():
-            comparison_result = "通過 ✅"
-            user_output = user_output.strip()
-            expected_output = expected_output.strip()
-            success_count += 1
-        else:
-            comparison_result = "未通過 ❌"
-
-        results[input_file] = {
-            "user_output": user_output,
-            "expected_output": expected_output,
-            "comparison_result": comparison_result
+        total_count = len(inputs)
+        summary = {
+            "success_count": success_count,
+            "total_count": total_count
         }
 
-    total_count = len(inputs)
-    summary = {
-        "success_count": success_count,
-        "total_count": total_count
-    }
-
-    return jsonify({"results": results, "summary": summary}), 200
+        return jsonify({"results": results, "summary": summary}), 200
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=5000, debug=True)
