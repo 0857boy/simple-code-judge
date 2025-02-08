@@ -20,7 +20,7 @@
         ```sh
         docker run -d -p 127.0.0.1:5000:5000 -v judge_testcases:/app/testcases --name judge ghcr.io/0857boy/simple-code-judge:latest
         ```
-    - 供外部連線使用
+    - 供本機和外部連線使用
         ```sh
         docker run -d -p 5000:5000 -v judge_testcases:/app/testcases --name judge ghcr.io/0857boy/simple-code-judge:latest
         ```
