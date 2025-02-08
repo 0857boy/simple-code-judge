@@ -18,13 +18,15 @@
 
     - 僅允許本機(localhost)使用
         ```sh
-        docker run -d -p 127.0.0.1:5000:5000 -v judge_testcases:/app/testcases --name judge ghcr.io/0857boy/simple-code-judge:latest
+        docker run -d -p 127.0.0.1:5000:5000 -v judge_testcases:/app/testcases --name judge ghcr.io/0857boy/simple-code-judge
         ```
     - 供本機和外部連線使用
         ```sh
-        docker run -d -p 5000:5000 -v judge_testcases:/app/testcases --name judge ghcr.io/0857boy/simple-code-judge:latest
+        docker run -d -p 5000:5000 -v judge_testcases:/app/testcases --name judge ghcr.io/0857boy/simple-code-judge
         ```
 2. 開啟瀏覽器並訪問 `http://localhost:5000` 使用前端介面。
+
+> **注意：** volume `judge_testcases` 用於保存測試資料，可以在容器重啟後保留測試資料，若刪除volume則會遺失所有測試資料。
 
 ## 功能
 
