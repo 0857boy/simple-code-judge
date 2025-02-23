@@ -234,7 +234,7 @@
                 <select id="testcaseSelect" multiple></select>
                 <button onclick="loadTestcase()">預覽測試資料</button>
                 <button onclick="deleteTestcase()">刪除測試資料</button>
-				<button onclick="deleteAllTestcase()">刪除所有測試資料</button>
+                <button onclick="deleteAllTestcase()">刪除所有測試資料</button>
                 <div id="deleteSpinner" class="spinner"></div>
                 <div id="loadedTestcases"></div>
             </div>
@@ -502,11 +502,11 @@
                     hideSpinner('deleteSpinner');
                 });
         }
-		
-		function deleteAllTestcase() {
-			let selectedTestcases = Array.from(document.getElementById("testcaseSelect")).map(option => option.value);
+  
+        function deleteAllTestcase() {
+            let selectedTestcases = Array.from(document.getElementById("testcaseSelect")).map(option => option.value);
             
-			// 確認對話框
+            // 確認對話框
             if (!confirm(`確定要刪除所有測試資料嗎？`)) {
                 return;
             }
