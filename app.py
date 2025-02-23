@@ -116,6 +116,22 @@ def delete_testcases():
 
     return jsonify({"message": "測試資料刪除成功"}), 200
 
+# 刪除測試資料
+@app.route("/deleteAll", methods=["POST"])
+def delete_all_testcases():
+    testcases = os.listdir(TESTCASE_DIR)
+    print(testcases, flush=True)
+
+    for testcase in testcases:
+        input_file = os.path.join(TESTCASE_DIR, testcase)
+        output_file = os.path.join(TESTCASE_DIR, testcase)
+        if os.path.exists(input_file):
+            os.remove(input_file)
+        if os.path.exists(output_file):
+            os.remove(output_file)
+
+    return jsonify({"message": "測試資料刪除成功"}), 200
+
 import tempfile
 
 @app.route("/judge", methods=["POST"])

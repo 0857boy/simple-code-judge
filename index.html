@@ -234,6 +234,7 @@
                 <select id="testcaseSelect" multiple></select>
                 <button onclick="loadTestcase()">預覽測試資料</button>
                 <button onclick="deleteTestcase()">刪除測試資料</button>
+                <button onclick="deleteAllTestcase()">刪除所有測試資料</button>
                 <div id="deleteSpinner" class="spinner"></div>
                 <div id="loadedTestcases"></div>
             </div>
@@ -492,6 +493,35 @@
                     alert(data.message || data.error);
                     if (!data.error) {
                         // 移除已刪除的選項
+                        let select = document.getElementById("testcaseSelect");
+                        selectedTestcases.forEach(testcase => {
+                            let option = select.querySelector(`option[value="${testcase}"]`);
+                            if (option) option.remove();
+                        });
+                    }
+                    hideSpinner('deleteSpinner');
+                });
+        }
+  
+        function deleteAllTestcase() {
+            let selectedTestcases = Array.from(document.getElementById("testcaseSelect")).map(option => option.value);
+            
+            // 確認對話框
+            if (!confirm(`確定要刪除所有測試資料嗎？`)) {
+                return;
+            }
+
+            showSpinner('deleteSpinner');
+
+            fetch("/deleteAll", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" }
+            })
+                .then(res => res.json())
+                .then(data => {
+                    alert(data.message || data.error);
+                    if (!data.error) {
+                        // Remove all displayed testcase
                         let select = document.getElementById("testcaseSelect");
                         selectedTestcases.forEach(testcase => {
                             let option = select.querySelector(`option[value="${testcase}"]`);
