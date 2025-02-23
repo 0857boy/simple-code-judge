@@ -51,6 +51,7 @@
 - `GET /export`：匯出測試資料。
 - `POST /import`：匯入測試資料。
 - `POST /delete`：刪除測試資料。
+- `POST /deleteAll`：一鍵刪除所有測試資料。
 - `POST /judge`：提交程式碼進行測試。
 
 ## 貢獻
