@@ -4,6 +4,7 @@ from flask import Flask, request, jsonify, send_file, send_from_directory
 from flask_cors import CORS
 import zipfile
 import io
+import json
 
 app = Flask(__name__)
 CORS(app)
@@ -11,8 +12,23 @@ CORS(app)
 # 測試資料夾
 TESTCASE_DIR = "/app/testcases"
 
+
+
 # 確保目錄存在
 os.makedirs(TESTCASE_DIR, exist_ok=True)
+
+CONFIG_FILE = TESTCASE_DIR+"/config.json"
+
+def load_config():
+    if os.path.exists(CONFIG_FILE):
+        with open(CONFIG_FILE, "r") as f:
+            return json.load(f)
+    return {}
+
+def save_config(config):
+    with open(CONFIG_FILE, "w") as f:
+        json.dump(config, f)
+
 
 @app.route("/")
 def home():
@@ -139,8 +155,19 @@ def judge_code():
     code = request.form.get("code")
     lang = request.form.get("lang")
 
-    if not code or lang not in ["cpp", "java", "python"]:
+    if not code or lang not in ["default", "cpp", "java", "python"]:
         return jsonify({"error": "請提供程式碼和語言 (cpp, java, python)"}), 400
+
+    config = load_config()
+
+    if lang == "default" and config["last_lang"] == "":
+        return jsonify({"error": "目前沒有預設"}), 400
+
+    if lang == "default":
+        lang = config["last_lang"]
+    else:
+        config["last_lang"] = lang
+        save_config(config)
 
     # 建立臨時目錄
     with tempfile.TemporaryDirectory() as temp_dir:
