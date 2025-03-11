@@ -255,6 +255,7 @@
             <textarea id="codeInput" rows="10" cols="50"></textarea><br>
             語言:
             <select id="langSelect">
+                <option value="default">預設</option>
                 <option value="cpp">C++</option>
                 <option value="java">Java</option>
                 <option value="python">Python</option>
@@ -290,7 +291,7 @@
             </div>
         </div>
     </div>
-    
+
 
     <script>
         function toggleContent(element) {
@@ -314,7 +315,7 @@
             let testName = document.getElementById("testName").value;
             let testInput = document.getElementById("testInput").value;
             let testOutput = document.getElementById("testOutput").value;
-            
+
             let formData = new FormData();
             formData.append("name", testName);
             formData.append("input", testInput);
