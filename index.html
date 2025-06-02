@@ -16,7 +16,6 @@
     <link rel="manifest" href="/favicons_io/site.webmanifest">
     
     <!-- External Libraries -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/diff_match_patch/20121119/diff_match_patch.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.7.1/jszip.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
     
@@ -434,7 +433,9 @@
             font-size: 0.875rem;
             line-height: 1.5;
             white-space: pre-wrap;
+            word-wrap: break-word;
             background: var(--background);
+            overflow-wrap: break-word;
         }
 
         /* Status Indicators */
@@ -463,54 +464,103 @@
             color: #92400e;
         }
 
-        /* Diff Highlighting */
+        /* Simple Diff Highlighting */
         .diff-added {
             background-color: #dcfce7;
             color: #166534;
+            padding: 1px 2px;
+            border-radius: 2px;
+            border-left: 3px solid #10b981;
         }
 
         .diff-removed {
             background-color: #fef2f2;
             color: #991b1b;
+            padding: 1px 2px;
+            border-radius: 2px;
+            border-left: 3px solid #ef4444;
         }
 
-        /* Special Character Symbols */
-        .newline-symbol {
-            color: var(--warning);
-            font-weight: 600;
-            font-size: 0.8em;
+        /* Myers算法差異顯示樣式 */
+        .diff-equal {
+            padding: 2px 4px;
+            margin-bottom: 1px;
+            background-color: transparent;
+            border-left: 3px solid transparent;
+        }
+
+        .diff-deleted {
+            background-color: #fef2f2;
+            color: #991b1b;
+            padding: 2px 4px;
+            margin-bottom: 1px;
+            border-radius: 2px;
+            border-left: 3px solid #ef4444;
+            position: relative;
+        }
+
+        .diff-deleted::before {
+            content: "- ";
+            font-weight: bold;
+            color: #ef4444;
+        }
+
+        .diff-added {
+            background-color: #dcfce7;
+            color: #166534;
+            padding: 2px 4px;
+            margin-bottom: 1px;
+            border-radius: 2px;
+            border-left: 3px solid #10b981;
+            position: relative;
+        }
+
+        .diff-added::before {
+            content: "+ ";
+            font-weight: bold;
+            color: #10b981;
+        }
+
+        /* 差異區塊的分組顯示 */
+        .diff-block {
+            margin: 0.5rem 0;
+            border-radius: var(--radius);
+            overflow: hidden;
+        }
+
+        .diff-block .diff-equal {
+            background-color: #f8fafc;
+        }
+
+        /* 懸停效果 */
+        .diff-deleted:hover, .diff-added:hover {
             opacity: 0.8;
+            transform: translateX(2px);
+            transition: all 0.2s ease;
         }
 
-        .tab-symbol {
-            color: var(--secondary);
-            font-weight: 600;
-            font-size: 0.9em;
-            opacity: 0.7;
+        /* 尾部空白視覺化 */
+        .trailing-whitespace {
+            background-color: rgba(255, 193, 7, 0.3);
+            color: #856404;
+            border-radius: 2px;
+            font-family: var(--font-mono);
+            font-size: 0.8em;
+            padding: 0 1px;
+            border: 1px dotted #ffc107;
         }
 
-        .space-symbol {
-            color: var(--secondary);
-            font-weight: 600;
+        .trailing-whitespace::after {
+            content: " (尾部空白)";
             font-size: 0.7em;
-            opacity: 0.6;
+            color: #6c757d;
+            font-style: italic;
+            opacity: 0;
+            transition: opacity 0.2s ease;
         }
 
-        /* Enhanced diff highlighting for special characters */
-        .diff-added .newline-symbol,
-        .diff-added .tab-symbol,
-        .diff-added .space-symbol {
-            background-color: rgba(22, 101, 52, 0.2);
-            border-radius: 2px;
-            padding: 0 2px;
-        }
-
-        .diff-removed .newline-symbol,
-        .diff-removed .tab-symbol,
-        .diff-removed .space-symbol {
-            background-color: rgba(153, 27, 27, 0.2);
-            border-radius: 2px;
-            padding: 0 2px;
+        .trailing-whitespace:hover::after {
+            opacity: 1;
         }
 
         /* Testcase Management */
@@ -655,6 +705,94 @@
             background-color: var(--primary);
             color: white;
         }
+
+        /* 字詞級差異顯示樣式 */
+        .diff-line {
+            margin-bottom: 2px;
+            min-height: 1.2em;
+            line-height: 1.4;
+        }
+
+        .diff-equal-token {
+            background-color: transparent;
+        }
+
+        .diff-deleted-token {
+            background-color: #fef2f2;
+            color: #991b1b;
+            border-radius: 3px;
+            padding: 1px 2px;
+            margin: 0 1px;
+            border: 1px solid #fecaca;
+            position: relative;
+        }
+
+        .diff-added-token {
+            background-color: #dcfce7;
+            color: #166534;
+            border-radius: 3px;
+            padding: 1px 2px;
+            margin: 0 1px;
+            border: 1px solid #bbf7d0;
+            position: relative;
+        }
+
+        /* 換行符顯示 */
+        .newline-marker {
+            color: #94a3b8;
+            font-size: 0.8em;
+            opacity: 0.7;
+            font-family: var(--font-mono);
+        }
+
+        /* 空內容顯示 */
+        .empty-content {
+            color: #94a3b8;
+            font-style: italic;
+            text-align: center;
+            padding: 1rem;
+        }
+
+        /* 字詞級差異的懸停效果 */
+        .diff-deleted-token:hover, .diff-added-token:hover {
+            opacity: 0.8;
+            transform: scale(1.05);
+            transition: all 0.2s ease;
+            z-index: 10;
+        }
+
+        /* 改進行級差異樣式以配合字詞級 */
+        .diff-equal, .diff-deleted, .diff-added {
+            font-family: var(--font-mono);
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+
+        /* 程式碼保存狀態顯示 */
+        .save-status {
+            margin-top: 0.5rem;
+            padding: 0.25rem 0.5rem;
+            background-color: var(--surface-dark);
+            border-radius: 4px;
+            border-left: 3px solid var(--primary);
+        }
+
+        .save-status small {
+            color: var(--text-secondary);
+            font-size: 0.75rem;
+        }
+
+        /* 程式碼管理按鈕組 */
+        .btn-group .btn-sm {
+            font-size: 0.75rem;
+            padding: 0.375rem 0.75rem;
+        }
+
+        /* 文件匯入按鈕樣式 */
+        .file-upload .btn {
+            position: relative;
+            overflow: hidden;
+        }
     </style>
 </head>
 <body>
@@ -771,6 +909,7 @@
                                 <label class="form-label">程式語言</label>
                                 <select id="langSelect" class="form-select">
                                     <option value="default">使用預設語言 -</option>
+                <option value="c">C</option>
                 <option value="cpp">C++</option>
                 <option value="java">Java</option>
                 <option value="python">Python</option>
@@ -781,9 +920,22 @@
                             <div class="btn-group">
                                 <button onclick="submitCode()" class="btn btn-primary" id="submitBtn">
                                     <span class="spinner" id="submitSpinner" style="display: none;"></span>
-                                    🚀 開始評判
+                                    🚀 開始測試
                                 </button>
-                                <button onclick="clearCode()" class="btn btn-secondary">清空代碼</button>
+                                <button onclick="clearCode()" class="btn btn-secondary">🗒️ 清空編輯器</button>
+                            </div>
+                            
+                            <!-- 程式碼管理功能 -->
+                            <div class="btn-group" style="margin-top: 1rem;">
+                                <button onclick="exportCode()" class="btn btn-secondary btn-sm">
+                                    📁 匯出程式碼
+                                </button>
+                                <div class="file-upload">
+                                    <button class="btn btn-secondary btn-sm" onclick="document.getElementById('codeImportFile').click()">
+                                        📂 匯入程式碼
+                                    </button>
+                                    <input type="file" id="codeImportFile" accept=".c,.cpp,.cc,.cxx,.java,.py,.js,.go,.txt" onchange="importCodeFromFile(event)" style="display: none;">
+                                </div>
                             </div>
         </div>
     </div>
@@ -877,11 +1029,6 @@
                                 <span class="summary-value" id="currentTestName">-</span>
                                 <span class="summary-label" style="margin-left: 1rem;">執行時間:</span>
                                 <span class="summary-value" id="executionTime">-</span>
-                                <button onclick="toggleSpecialChars()" class="btn btn-sm btn-secondary" id="toggleSpecialCharsBtn" 
-                                        style="margin-left: 1rem;" 
-                                        title="切換顯示換行符(↵)、Tab符(→)和空格符(·)，幫助找出輸出差異">
-                                    顯示特殊字符
-                                </button>
                             </div>
                         </div>
                         <div class="output-comparison">
@@ -894,14 +1041,6 @@
                                 <div class="output-content" id="expectedOutput"></div>
                             </div>
                         </div>
-                        <div id="symbolLegend" style="display: none; margin-top: 1rem; padding: 0.75rem; background: var(--surface-dark); border-radius: var(--radius); font-size: 0.8rem; color: var(--text-secondary);">
-                            <strong>符號說明:</strong> 
-                            <span class="newline-symbol">↵</span> 換行符 · 
-                            <span class="tab-symbol">→</span> Tab符 · 
-                            <span class="space-symbol">·</span> 空格 · 
-                            <span style="background: #dcfce7; padding: 0 2px; border-radius: 2px;">綠色</span> 多出的內容 · 
-                            <span style="background: #fef2f2; padding: 0 2px; border-radius: 2px;">紅色</span> 缺少的內容
-                        </div>
                     </div>
                 </div>
             </div>
@@ -913,13 +1052,20 @@
         let testResults = [];
         let currentIndex = 0;
         let systemInfo = {};
-        let showSpecialChars = false; // 控制是否顯示特殊字符
+        const intelligentMode = true; // 固定使用智能比對模式（忽略大小寫，去除尾部空白）
+
+        // LocalStorage 程式碼管理功能
+        const CODE_STORAGE_KEY = 'simple_code_judge_code';
+        const LANG_STORAGE_KEY = 'simple_code_judge_language';
+        const LAST_SAVE_TIME_KEY = 'simple_code_judge_last_save_time';
 
         // Initialize
         document.addEventListener('DOMContentLoaded', function() {
             loadSystemStats();
             refreshTestcaseOptions();
             loadSettings(); // 載入系統設定
+            loadSavedCode(); // 載入保存的程式碼
+            setupCodeAutoSave(); // 設置自動保存機制
         });
 
         // Utility functions
@@ -996,6 +1142,7 @@
                 if (lastLanguage && lastLanguage !== '無') {
                     // 語言名稱映射
                     const langNames = {
+                        'c': 'C',
                         'cpp': 'C++',
                         'java': 'Java', 
                         'python': 'Python',
@@ -1156,80 +1303,232 @@
             const userOutputElement = document.getElementById('userOutput');
             const expectedOutputElement = document.getElementById('expectedOutput');
 
-            if (userOutput.trim() === expectedOutput.trim()) {
-                if (showSpecialChars) {
-                    userOutputElement.innerHTML = visualizeSpecialChars(userOutput);
-                    expectedOutputElement.innerHTML = visualizeSpecialChars(expectedOutput);
-                } else {
-                    userOutputElement.textContent = userOutput;
-                    expectedOutputElement.textContent = expectedOutput;
-                }
-                return;
+            // 使用Myers算法進行差異分析
+            const comparison = performMyersDiff(userOutput, expectedOutput);
+            
+            if (comparison.isIdentical) {
+                // 完全相同
+                userOutputElement.innerHTML = escapeHtml(userOutput);
+                expectedOutputElement.innerHTML = escapeHtml(expectedOutput);
+                userOutputElement.style.backgroundColor = '#dcfce7'; // 淡綠色背景
+                expectedOutputElement.style.backgroundColor = '#dcfce7';
+            } else {
+                // 有差異，使用Myers算法結果
+                userOutputElement.innerHTML = comparison.userHtml;
+                expectedOutputElement.innerHTML = comparison.expectedHtml;
+                userOutputElement.style.backgroundColor = '';
+                expectedOutputElement.style.backgroundColor = '';
             }
+        }
 
-            try {
-                const dmp = new diff_match_patch();
-                const diff = dmp.diff_main(expectedOutput, userOutput);
-                dmp.diff_cleanupSemantic(diff);
-
-                let userOutputHtml = '';
-                let expectedOutputHtml = '';
-
-                diff.forEach(part => {
-                    const [operation, text] = part;
+        // Myers差分算法實現 - 字詞級比對
+        function performMyersDiff(userOutput, expectedOutput) {
+            // 檢查是否完全相同
+            const isIdentical = compareOutputs(userOutput, expectedOutput);
+            
+            if (isIdentical) {
+                return { isIdentical: true };
+            }
+            
+            // 將文本分割為字詞進行比對
+            const userTokens = tokenizeText(userOutput);
+            const expectedTokens = tokenizeText(expectedOutput);
+            
+            // 使用Myers算法計算字詞級差異
+            const diffs = myersAlgorithm(userTokens, expectedTokens);
+            
+            // 將差異轉換為HTML顯示
+            const htmlResult = diffToHtml(diffs, userTokens, expectedTokens);
+            
+            return {
+                isIdentical: false,
+                userHtml: htmlResult.userHtml,
+                expectedHtml: htmlResult.expectedHtml
+            };
+        }
+        
+        // 文本分詞函數 - 將文本分割為字詞和空白字符
+        function tokenizeText(text) {
+            const tokens = [];
+            const lines = text.split('\n');
+            
+            for (let lineIndex = 0; lineIndex < lines.length; lineIndex++) {
+                const line = lines[lineIndex];
+                
+                // 使用正則表達式分割字詞，保留空白字符和標點符號
+                const lineTokens = line.match(/\S+|\s+/g) || [];
+                
+                for (const token of lineTokens) {
+                    tokens.push({
+                        value: token,
+                        lineIndex: lineIndex,
+                        isWhitespace: /^\s+$/.test(token),
+                        isNewline: false
+                    });
+                }
+                
+                // 在行末添加換行標記（除了最後一行）
+                if (lineIndex < lines.length - 1) {
+                    tokens.push({
+                        value: '\n',
+                        lineIndex: lineIndex,
+                        isWhitespace: false,
+                        isNewline: true
+                    });
+                }
+            }
+            
+            return tokens;
+        }
+        
+        // Myers算法核心實現 - 適用於字詞比對
+        function myersAlgorithm(a, b) {
+            const n = a.length;
+            const m = b.length;
+            const max = n + m;
+            
+            // 使用Myers算法計算編輯圖
+            const v = {};
+            const trace = [];
+            
+            v[1] = 0;
+            
+            for (let d = 0; d <= max; d++) {
+                trace.push({...v});
+                
+                for (let k = -d; k <= d; k += 2) {
+                    let x;
                     
-                    if (showSpecialChars) {
-                        const processedText = visualizeSpecialChars(text);
-                        
-                        if (operation === 1) { // Addition (用戶輸出多出的部分)
-                            userOutputHtml += `<span class="diff-added">${processedText}</span>`;
-                        } else if (operation === -1) { // Deletion (預期輸出中缺少的部分)
-                            expectedOutputHtml += `<span class="diff-removed">${processedText}</span>`;
-                        } else { // No change (相同的部分)
-                            userOutputHtml += processedText;
-                            expectedOutputHtml += processedText;
-                        }
+                    if (k === -d || (k !== d && v[k - 1] < v[k + 1])) {
+                        x = v[k + 1];
                     } else {
-                        // 普通模式，只轉義 HTML 字符
-                        const escapedText = escapeHtml(text);
-                        
-                        if (operation === 1) { // Addition
-                            userOutputHtml += `<span class="diff-added">${escapedText}</span>`;
-                        } else if (operation === -1) { // Deletion
-                            expectedOutputHtml += `<span class="diff-removed">${escapedText}</span>`;
-                        } else { // No change
-                            userOutputHtml += escapedText;
-                            expectedOutputHtml += escapedText;
-                        }
+                        x = v[k - 1] + 1;
                     }
-                });
-
-                userOutputElement.innerHTML = userOutputHtml;
-                expectedOutputElement.innerHTML = expectedOutputHtml;
-            } catch (error) {
-                // 如果 diff 庫出錯，則使用簡單的文字顯示
-                if (showSpecialChars) {
-                    userOutputElement.innerHTML = visualizeSpecialChars(userOutput);
-                    expectedOutputElement.innerHTML = visualizeSpecialChars(expectedOutput);
-                } else {
-                    userOutputElement.textContent = userOutput;
-                    expectedOutputElement.textContent = expectedOutput;
+                    
+                    let y = x - k;
+                    
+                    // 延伸對角線（匹配相同字詞）
+                    while (x < n && y < m && tokensEqual(a[x], b[y])) {
+                        x++;
+                        y++;
+                    }
+                    
+                    v[k] = x;
+                    
+                    if (x >= n && y >= m) {
+                        return backtrack(trace, a, b, x, y, d);
+                    }
                 }
             }
+            
+            return [];
+        }
+        
+        // 回溯生成差異序列
+        function backtrack(trace, a, b, x, y, d) {
+            const diffs = [];
+            
+            for (let currentD = d; currentD >= 0; currentD--) {
+                const v = trace[currentD];
+                const k = x - y;
+                
+                let prevK;
+                if (k === -currentD || (k !== currentD && v[k - 1] < v[k + 1])) {
+                    prevK = k + 1;
+                } else {
+                    prevK = k - 1;
+                }
+                
+                const prevX = v[prevK];
+                const prevY = prevX - prevK;
+                
+                // 記錄對角線移動（相同字詞）
+                while (x > prevX && y > prevY) {
+                    x--;
+                    y--;
+                    diffs.unshift({ type: 'equal', aIndex: x, bIndex: y });
+                }
+                
+                // 記錄編輯操作
+                if (currentD > 0) {
+                    if (x === prevX) {
+                        // 插入操作
+                        y--;
+                        diffs.unshift({ type: 'insert', bIndex: y });
+                    } else {
+                        // 刪除操作
+                        x--;
+                        diffs.unshift({ type: 'delete', aIndex: x });
+                    }
+                }
+            }
+            
+            return diffs;
+        }
+        
+        // 比較兩個字詞是否相等（考慮智能模式）
+        function tokensEqual(token1, token2) {
+            if (!token1 || !token2) return false;
+            
+            if (intelligentMode) {
+                // 智能模式：忽略大小寫，去除尾部空白
+                let val1 = token1.value;
+                let val2 = token2.value;
+                
+                if (!token1.isWhitespace && !token2.isWhitespace) {
+                    val1 = val1.toLowerCase().trimEnd();
+                    val2 = val2.toLowerCase().trimEnd();
+                }
+                
+                return val1 === val2;
+            } else {
+                // 嚴格模式：去除尾部空白但保持大小寫敏感
+                let val1 = token1.value;
+                let val2 = token2.value;
+                
+                if (!token1.isWhitespace && !token2.isWhitespace) {
+                    val1 = val1.trimEnd();
+                    val2 = val2.trimEnd();
+                }
+                
+                return val1 === val2;
+            }
+        }
+
+        function compareOutputs(output1, output2) {
+            if (intelligentMode) {
+                // 智能模式：去除尾部空白、忽略大小寫、標準化空白字符
+                const normalize = (text) => {
+                    return text.split('\n')
+                              .map(line => line.trimEnd().toLowerCase())
+                              .join('\n')
+                              .trim()
+                              .replace(/\s+/g, ' ');
+                };
+                return normalize(output1) === normalize(output2);
+            } else {
+                // 嚴格模式：僅去除每行尾部空白和整體尾部空白
+                const normalizeStrict = (text) => {
+                    return text.split('\n')
+                              .map(line => line.trimEnd())
+                              .join('\n')
+                              .trimEnd();
+                };
+                return normalizeStrict(output1) === normalizeStrict(output2);
+            }
+        }
+
+        function performLineComparison(userOutput, expectedOutput) {
+            // 這個函數現在被performMyersDiff替代，但保留以防向後兼容
+            return performMyersDiff(userOutput, expectedOutput);
         }
 
         function escapeHtml(text) {
-            return text
-                .replace(/&/g, '&amp;')
-                .replace(/</g, '&lt;')
-                .replace(/>/g, '&gt;');
-        }
-
-        function visualizeSpecialChars(text) {
-            return escapeHtml(text)
-                .replace(/\n/g, '<span class="newline-symbol">↵</span>\n')
-                .replace(/\t/g, '<span class="tab-symbol">→</span>')
-                .replace(/ /g, '<span class="space-symbol">·</span>');
+            return text.replace(/&/g, '&amp;')
+                      .replace(/</g, '&lt;')
+                      .replace(/>/g, '&gt;')
+                      .replace(/"/g, '&quot;')
+                      .replace(/'/g, '&#39;');
         }
 
         function prevResult() {
@@ -1247,7 +1546,17 @@
         }
 
         function clearCode() {
-            document.getElementById('codeInput').value = '';
+            if (confirm('確定要清空編輯器中的程式碼嗎？')) {
+                document.getElementById('codeInput').value = '';
+                document.getElementById('langSelect').value = 'default';
+                showNotification('編輯器已清空');
+                
+                // 立即保存空白狀態（如果自動保存開啟）
+                const autoSaveEnabled = document.getElementById('autoSaveCode')?.checked !== false;
+                if (autoSaveEnabled) {
+                    saveCodeToStorage();
+                }
+            }
         }
 
         async function exportTestcases() {
@@ -1448,29 +1757,6 @@
             }
         }
 
-        function toggleSpecialChars() {
-            showSpecialChars = !showSpecialChars;
-            const btn = document.getElementById('toggleSpecialCharsBtn');
-            const legend = document.getElementById('symbolLegend');
-            
-            if (showSpecialChars) {
-                btn.textContent = '隱藏特殊字符';
-                btn.classList.remove('btn-secondary');
-                btn.classList.add('btn-primary');
-                legend.style.display = 'block';
-            } else {
-                btn.textContent = '顯示特殊字符';
-                btn.classList.remove('btn-primary');
-                btn.classList.add('btn-secondary');
-                legend.style.display = 'none';
-            }
-            
-            // 重新渲染當前結果
-            if (testResults.length > 0) {
-                updateCurrentTestDisplay();
-            }
-        }
-
         // Settings Management
         async function loadSettings() {
             try {
@@ -1549,6 +1835,329 @@
                 document.getElementById('showExecutionTime').checked = true;
                 
                 showNotification('設定已重置為預設值，請點擊保存以應用變更');
+            }
+        }
+
+        // 將字詞級差異轉換為HTML顯示
+        function diffToHtml(diffs, userTokens, expectedTokens) {
+            const userResult = reconstructTextWithDiffs(diffs, userTokens, expectedTokens, 'user');
+            const expectedResult = reconstructTextWithDiffs(diffs, userTokens, expectedTokens, 'expected');
+            
+            return {
+                userHtml: userResult,
+                expectedHtml: expectedResult
+            };
+        }
+        
+        // 重構文本並標記差異
+        function reconstructTextWithDiffs(diffs, userTokens, expectedTokens, perspective) {
+            let html = '';
+            let currentLine = '';
+            let currentLineIndex = 0;
+            
+            for (const diff of diffs) {
+                let token;
+                let tokenValue;
+                let isFromUser = false;
+                
+                switch (diff.type) {
+                    case 'equal':
+                        // 相同的字詞
+                        token = userTokens[diff.aIndex];
+                        tokenValue = visualizeWhitespace(token.value);
+                        
+                        if (token.isNewline) {
+                            currentLine += `<span class="diff-equal-token">${tokenValue}</span>`;
+                            html += `<div class="diff-line">${currentLine}</div>`;
+                            currentLine = '';
+                            currentLineIndex++;
+                        } else {
+                            currentLine += `<span class="diff-equal-token">${tokenValue}</span>`;
+                        }
+                        break;
+                        
+                    case 'delete':
+                        // 只在用戶視角顯示刪除的字詞
+                        if (perspective === 'user') {
+                            token = userTokens[diff.aIndex];
+                            tokenValue = visualizeWhitespace(token.value);
+                            
+                            if (token.isNewline) {
+                                currentLine += `<span class="diff-deleted-token">${tokenValue}</span>`;
+                                html += `<div class="diff-line">${currentLine}</div>`;
+                                currentLine = '';
+                                currentLineIndex++;
+                            } else {
+                                currentLine += `<span class="diff-deleted-token">${tokenValue}</span>`;
+                            }
+                        }
+                        break;
+                        
+                    case 'insert':
+                        // 只在預期視角顯示插入的字詞
+                        if (perspective === 'expected') {
+                            token = expectedTokens[diff.bIndex];
+                            tokenValue = visualizeWhitespace(token.value);
+                            
+                            if (token.isNewline) {
+                                currentLine += `<span class="diff-added-token">${tokenValue}</span>`;
+                                html += `<div class="diff-line">${currentLine}</div>`;
+                                currentLine = '';
+                                currentLineIndex++;
+                            } else {
+                                currentLine += `<span class="diff-added-token">${tokenValue}</span>`;
+                            }
+                        }
+                        break;
+                }
+            }
+            
+            // 處理最後一行（如果沒有換行符結尾）
+            if (currentLine.trim()) {
+                html += `<div class="diff-line">${currentLine}</div>`;
+            }
+            
+            return html || '<div class="diff-line empty-content">(空內容)</div>';
+        }
+        
+        // 視覺化空白字符（尾部空白顯示為淡色點）
+        function visualizeWhitespace(text) {
+            const escaped = escapeHtml(text);
+            
+            // 處理換行符
+            if (text === '\n') {
+                return '<span class="newline-marker">↵</span>';
+            }
+            
+            // 將尾部空白替換為可見的標記
+            return escaped.replace(/( +)$/g, (match) => {
+                return `<span class="trailing-whitespace">${match.replace(/ /g, '·')}</span>`;
+            });
+        }
+
+        // 載入保存的程式碼
+        function loadSavedCode() {
+            try {
+                const savedCode = localStorage.getItem(CODE_STORAGE_KEY);
+                const savedLang = localStorage.getItem(LANG_STORAGE_KEY);
+                const lastSaveTime = localStorage.getItem(LAST_SAVE_TIME_KEY);
+                
+                if (savedCode) {
+                    document.getElementById('codeInput').value = savedCode;
+                    console.log('已載入保存的程式碼');
+                }
+                
+                if (savedLang) {
+                    document.getElementById('langSelect').value = savedLang;
+                }
+                
+                if (lastSaveTime) {
+                    updateSaveStatus(new Date(parseInt(lastSaveTime)));
+                }
+            } catch (error) {
+                console.error('載入保存的程式碼失敗:', error);
+            }
+        }
+
+        // 保存程式碼到localStorage
+        function saveCodeToStorage() {
+            try {
+                const code = document.getElementById('codeInput').value;
+                const lang = document.getElementById('langSelect').value;
+                const currentTime = Date.now();
+                
+                localStorage.setItem(CODE_STORAGE_KEY, code);
+                localStorage.setItem(LANG_STORAGE_KEY, lang);
+                localStorage.setItem(LAST_SAVE_TIME_KEY, currentTime.toString());
+                
+                updateSaveStatus(new Date(currentTime));
+                return true;
+            } catch (error) {
+                console.error('保存程式碼失敗:', error);
+                showNotification('程式碼保存失敗', 'error');
+                return false;
+            }
+        }
+
+        // 設置自動保存機制
+        function setupCodeAutoSave() {
+            const codeInput = document.getElementById('codeInput');
+            const langSelect = document.getElementById('langSelect');
+            let saveTimeout;
+
+            // 創建保存狀態顯示元素
+            createSaveStatusElement();
+
+            // 自動保存函數（防抖）
+            function autoSave() {
+                clearTimeout(saveTimeout);
+                saveTimeout = setTimeout(() => {
+                    const autoSaveEnabled = document.getElementById('autoSaveCode')?.checked !== false;
+                    if (autoSaveEnabled) {
+                        saveCodeToStorage();
+                    }
+                }, 1000); // 1秒後保存
+            }
+
+            // 綁定事件監聽器
+            codeInput.addEventListener('input', autoSave);
+            codeInput.addEventListener('paste', autoSave);
+            langSelect.addEventListener('change', () => {
+                saveCodeToStorage(); // 語言切換立即保存
+            });
+
+            // 頁面卸載前保存
+            window.addEventListener('beforeunload', () => {
+                const autoSaveEnabled = document.getElementById('autoSaveCode')?.checked !== false;
+                if (autoSaveEnabled) {
+                    saveCodeToStorage();
+                }
+            });
+        }
+
+        // 創建保存狀態顯示元素
+        function createSaveStatusElement() {
+            const codeGroup = document.getElementById('codeInput').closest('.form-group');
+            const saveStatus = document.createElement('div');
+            saveStatus.id = 'saveStatus';
+            saveStatus.className = 'save-status';
+            saveStatus.innerHTML = '<small class="form-help">💾 自動保存：未保存</small>';
+            codeGroup.appendChild(saveStatus);
+        }
+
+        // 更新保存狀態顯示
+        function updateSaveStatus(saveTime) {
+            const saveStatus = document.getElementById('saveStatus');
+            if (saveStatus) {
+                if (saveTime && saveTime.getTime() > 0 && !isNaN(saveTime.getTime())) {
+                    const timeString = saveTime.toLocaleTimeString('zh-TW');
+                    saveStatus.innerHTML = `<small class="form-help">💾 已保存於：${timeString}</small>`;
+                } else {
+                    saveStatus.innerHTML = '<small class="form-help">💾 自動保存：未保存</small>';
+                }
+            }
+        }
+
+        // 匯出程式碼為檔案
+
+        // 匯出程式碼為檔案
+        function exportCode() {
+            const code = document.getElementById('codeInput').value;
+            const lang = document.getElementById('langSelect').value;
+            
+            if (!code.trim()) {
+                showNotification('沒有程式碼可以匯出', 'error');
+                return;
+            }
+
+            // 根據語言決定副檔名
+            const extensions = {
+                'c': '.c',
+                'cpp': '.cpp',
+                'java': '.java',
+                'python': '.py',
+                'javascript': '.js',
+                'golang': '.go',
+                'default': '.txt'
+            };
+            
+            const extension = extensions[lang] || '.txt';
+            const filename = `code_${new Date().toISOString().slice(0, 19).replace(/[:\-]/g, '').replace('T', '_')}${extension}`;
+            
+            const blob = new Blob([code], { type: 'text/plain' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = filename;
+            a.click();
+            URL.revokeObjectURL(url);
+            
+            showNotification(`程式碼已匯出為 ${filename}`);
+        }
+
+        // 從檔案匯入程式碼
+        function importCodeFromFile(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const content = e.target.result;
+                document.getElementById('codeInput').value = content;
+                
+                // 根據副檔名自動設定語言
+                const extension = file.name.split('.').pop().toLowerCase();
+                const langMapping = {
+                    'c': 'c',
+                    'cpp': 'cpp',
+                    'cc': 'cpp',
+                    'cxx': 'cpp',
+                    'java': 'java',
+                    'py': 'python',
+                    'js': 'javascript',
+                    'go': 'golang'
+                };
+                
+                if (langMapping[extension]) {
+                    document.getElementById('langSelect').value = langMapping[extension];
+                }
+                
+                saveCodeToStorage(); // 匯入後立即保存
+                showNotification(`已匯入程式碼：${file.name}`);
+            };
+            
+            reader.readAsText(file);
+            event.target.value = ''; // 重置文件輸入
+        }
+
+        // 從localStorage恢復保存的程式碼
+        function restoreSavedCode() {
+            try {
+                const savedCode = localStorage.getItem(CODE_STORAGE_KEY);
+                const savedLang = localStorage.getItem(LANG_STORAGE_KEY);
+                const lastSaveTime = localStorage.getItem(LAST_SAVE_TIME_KEY);
+                
+                if (!savedCode && !savedLang) {
+                    showNotification('沒有找到保存的程式碼', 'warning');
+                    return;
+                }
+                
+                const currentCode = document.getElementById('codeInput').value;
+                const currentLang = document.getElementById('langSelect').value;
+                
+                // 檢查是否有變更
+                if (currentCode === (savedCode || '') && currentLang === (savedLang || 'default')) {
+                    showNotification('當前程式碼與保存記錄相同', 'warning');
+                    return;
+                }
+                
+                // 確認恢復操作
+                let confirmMessage = '確定要恢復保存的程式碼嗎？';
+                if (lastSaveTime) {
+                    const saveDate = new Date(parseInt(lastSaveTime));
+                    confirmMessage += `\n\n保存時間：${saveDate.toLocaleString('zh-TW')}`;
+                }
+                if (currentCode.trim()) {
+                    confirmMessage += '\n\n注意：這將覆蓋當前編輯器中的程式碼！';
+                }
+                
+                if (confirm(confirmMessage)) {
+                    if (savedCode) {
+                        document.getElementById('codeInput').value = savedCode;
+                    }
+                    if (savedLang) {
+                        document.getElementById('langSelect').value = savedLang;
+                    }
+                    
+                    if (lastSaveTime) {
+                        updateSaveStatus(new Date(parseInt(lastSaveTime)));
+                    }
+                    
+                    showNotification('已恢復保存的程式碼');
+                }
+            } catch (error) {
+                console.error('恢復保存程式碼失敗:', error);
+                showNotification('恢復程式碼失敗', 'error');
             }
         }
     </script>

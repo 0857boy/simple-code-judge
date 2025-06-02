@@ -6,17 +6,12 @@ import logging
 import json
 import zipfile
 import io
-import shutil
 from datetime import datetime
-from pathlib import Path
-from typing import Dict, List, Tuple, Optional
-from concurrent.futures import ProcessPoolExecutor, TimeoutError as FutureTimeoutError
+from typing import Dict, Tuple
 
 from flask import Flask, request, jsonify, send_file, send_from_directory
 from flask_cors import CORS
 from werkzeug.utils import secure_filename
-from werkzeug.exceptions import RequestEntityTooLarge
-
 # 配置日誌
 logging.basicConfig(
     level=logging.INFO,
