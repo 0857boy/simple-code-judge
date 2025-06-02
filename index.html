@@ -2,305 +2,934 @@
 <html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
-    <title>Simple Code Judge</title>
-    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simple Code Judge - 程式碼評判系統</title>
+    
+    <!-- Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    
+    <!-- Icons -->
     <link rel="apple-touch-icon" sizes="180x180" href="/favicons_io/apple-touch-icon.png">
     <link rel="icon" type="image/png" sizes="32x32" href="/favicons_io/favicon-32x32.png">
     <link rel="icon" type="image/png" sizes="16x16" href="/favicons_io/favicon-16x16.png">
     <link rel="manifest" href="/favicons_io/site.webmanifest">
-    <link rel="mask-icon" href="/favicons_io/safari-pinned-tab.svg" color="#5bbad5">
-    <meta name="msapplication-TileColor" content="#da532c">
-    <meta name="theme-color" content="#ffffff">
+    
+    <!-- External Libraries -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/diff_match_patch/20121119/diff_match_patch.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.7.1/jszip.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+    
     <style>
-        body {
-            font-family: 'Roboto', sans-serif;
-            background-color: #f4f4f4;
+        :root {
+            --primary: #3b82f6;
+            --primary-dark: #2563eb;
+            --primary-light: #dbeafe;
+            --secondary: #64748b;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --error: #ef4444;
+            --background: #f8fafc;
+            --surface: #ffffff;
+            --surface-dark: #f1f5f9;
+            --text-primary: #1e293b;
+            --text-secondary: #64748b;
+            --border: #e2e8f0;
+            --border-dark: #cbd5e1;
+            --shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
+            --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+            --radius: 8px;
+            --font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
+        }
+
+        * {
             margin: 0;
             padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: var(--font-family);
+            background: var(--background);
+            color: var(--text-primary);
+            line-height: 1.6;
+            overflow-x: hidden;
+        }
+
+        /* Layout */
+        .app {
+            min-height: 100vh;
             display: flex;
             flex-direction: column;
-            align-items: center;
-            font-size: 16px;
-            line-height: 1.5;
         }
 
-        h2 {
-            color: #333;
-            margin-bottom: 10px;
-            cursor: pointer;
-            transition: color 0.3s ease;
-        }
-
-        h2:hover {
-            color: #007BFF;
+        .header {
+            background: var(--surface);
+            border-bottom: 1px solid var(--border);
+            padding: 1rem 0;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            backdrop-filter: blur(10px);
         }
 
         .container {
-            background-color: #fff;
-            padding: 20px;
-            margin: 20px 0;
-            border-radius: 8px;
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-            width: 90%;
-            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 1rem;
         }
 
-        .container:hover {
-            transform: scale(1.02);
-            box-shadow: 0 0 15px rgba(0, 0, 0, 0.2);
+        .header-content {
+            display: flex;
+            justify-content: between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 1rem;
         }
 
-        .content {
-            display: none;
-            margin-top: 10px;
-            opacity: 0;
-            transition: opacity 0.3s ease;
+        .logo {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--primary);
         }
 
-        .content.show {
+        .stats {
+            display: flex;
+            gap: 2rem;
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+        }
+
+        .stat-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .stat-value {
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .main-content {
+            flex: 1;
+            padding: 2rem 0;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        @media (max-width: 768px) {
+            .grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .settings-card {
+            grid-column: 1 / -1; /* 讓設定卡片跨越整行 */
+        }
+
+        /* Form Help Text */
+        .form-help {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            margin-top: 0.25rem;
             display: block;
-            opacity: 1;
         }
 
-        input, textarea, select, button {
-            width: 100%;
-            padding: 10px;
-            margin: 10px 0;
-            border: 1px solid #ccc;
-            border-radius: 4px;
-            font-size: 16px;
-            transition: border-color 0.3s ease, box-shadow 0.3s ease;
-        }
-
-        input:focus, textarea:focus, select:focus, button:focus {
-            border-color: #007BFF;
-            box-shadow: 0 0 5px rgba(0, 123, 255, 0.5);
-            outline: none;
-        }
-
-        button {
-            background-color: #007BFF;
-            color: #fff;
-            border: none;
-            cursor: pointer;
-            transition: background-color 0.3s ease;
-        }
-
-        button:hover {
-            background-color: #0056b3;
-        }
-
-        .button-container {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            margin-top: 10px;
-        }
-
-        .button-container button {
-            background-color: #007BFF;
-            color: #fff;
-            border: none;
-            cursor: pointer;
-            padding: 10px;
-            margin: 0 10px;
-            border-radius: 50%;
-            transition: background-color 0.3s ease;
-            width: 40px;
-            height: 40px;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-        }
-
-        .button-container button:hover {
-            background-color: #0056b3;
-        }
-
-        .carousel-container {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            margin-top: 20px;
-            width: 100%; 
-        }
-
-        .carousel {
-            width: 95%;
-            height: auto;
-            border: 1px solid #000;
+        /* Checkbox Styles */
+        .checkbox-group {
             display: flex;
             flex-direction: column;
-            justify-content: center;
+            gap: 0.75rem;
+        }
+
+        .checkbox-label {
+            display: flex;
             align-items: center;
-            font-size: 18px;
-            background-color: #fff;
-            border-radius: 8px;
-            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-            transition: transform 0.3s ease;
-            padding: 20px;
-        }
-
-        .carousel-container button {
-            background-color: #007BFF;
-            color: #fff;
-            border: none;
+            gap: 0.5rem;
             cursor: pointer;
-            padding: 10px;
-            margin: 0 10px;
-            border-radius: 50%;
-            transition: background-color 0.3s ease;
+            font-size: 0.875rem;
         }
 
-        .carousel-container button:hover {
-            background-color: #0056b3;
+        .form-checkbox {
+            width: auto;
+            margin: 0;
+            cursor: pointer;
         }
 
-        .spinner {
+        /* Cards */
+        .card {
+            background: var(--surface);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            overflow: hidden;
+            transition: all 0.2s ease;
+        }
+
+        .card:hover {
+            box-shadow: var(--shadow-lg);
+        }
+
+        .card-header {
+            padding: 1.5rem;
+            border-bottom: 1px solid var(--border);
+            background: var(--surface-dark);
+        }
+
+        .card-title {
+            font-size: 1.125rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            cursor: pointer;
+            user-select: none;
+        }
+
+        .card-title:hover {
+            color: var(--primary);
+        }
+
+        .card-subtitle {
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+        }
+
+        .card-content {
+            padding: 1.5rem;
+        }
+
+        .card-content.collapsed {
             display: none;
-            border: 4px solid rgba(0, 0, 0, 0.1);
+        }
+
+        .expand-icon {
+            transition: transform 0.2s ease;
+            color: var(--text-secondary);
+        }
+
+        .expand-icon.expanded {
+            transform: rotate(180deg);
+        }
+
+        /* Form Elements */
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 500;
+            color: var(--text-primary);
+        }
+
+        .form-input, .form-textarea, .form-select {
+            width: 100%; 
+            padding: 0.75rem;
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            font-size: 0.875rem;
+            transition: all 0.2s ease;
+            background: var(--surface);
+        }
+
+        .form-input:focus, .form-textarea:focus, .form-select:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px var(--primary-light);
+        }
+
+        .form-textarea {
+            resize: vertical;
+            min-height: 120px;
+            font-family: var(--font-mono);
+        }
+
+        .code-editor {
+            min-height: 300px;
+            font-family: var(--font-mono);
+            font-size: 0.875rem;
+            line-height: 1.5;
+        }
+
+        /* Buttons */
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: var(--radius);
+            font-size: 0.875rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            text-decoration: none;
+            user-select: none;
+        }
+
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+        }
+
+        .btn-primary:hover:not(:disabled) {
+            background: var(--primary-dark);
+        }
+
+        .btn-secondary {
+            background: var(--surface-dark);
+            color: var(--text-primary);
+            border: 1px solid var(--border);
+        }
+
+        .btn-secondary:hover:not(:disabled) {
+            background: var(--border);
+        }
+
+        .btn-success {
+            background: var(--success);
+            color: white;
+        }
+
+        .btn-warning {
+            background: var(--warning);
+            color: white;
+        }
+
+        .btn-error {
+            background: var(--error);
+            color: white;
+        }
+
+        .btn-sm {
+            padding: 0.5rem 1rem;
+            font-size: 0.8rem;
+        }
+
+        .btn-icon {
+            padding: 0.5rem;
+            width: 2.5rem;
+            height: 2.5rem;
+        }
+
+        /* Button Groups */
+        .btn-group {
+            display: flex;
+            gap: 0.75rem;
+            flex-wrap: wrap;
+        }
+
+        /* Loading Spinner */
+        .spinner {
+            width: 1rem;
+            height: 1rem;
+            border: 2px solid transparent;
+            border-top: 2px solid currentColor;
             border-radius: 50%;
-            border-top: 4px solid #007BFF;
-            width: 24px;
-            height: 24px;
             animation: spin 1s linear infinite;
         }
 
         @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
+            to { transform: rotate(360deg); }
         }
 
-        .highlight {
-            background-color: #ffdddd;
+        /* Results Display */
+        .results-container {
+            background: var(--surface);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            overflow: hidden;
         }
 
-        .output-container {
+        .results-header {
+            padding: 1.5rem;
+            background: var(--surface-dark);
+            border-bottom: 1px solid var(--border);
+        }
+
+        .results-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+        }
+
+        .results-summary {
             display: flex;
-            justify-content: space-between;
+            gap: 2rem;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .summary-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.875rem;
+        }
+
+        .summary-label {
+            color: var(--text-secondary);
+        }
+
+        .summary-value {
+            font-weight: 600;
+        }
+
+        .results-navigation {
+            display: flex;
+            gap: 0.5rem;
+            align-items: center;
+        }
+
+        .results-content {
+            padding: 1.5rem;
+        }
+
+        .output-comparison {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.5rem;
+            margin-top: 1rem;
+        }
+
+        @media (max-width: 768px) {
+            .output-comparison {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .output-panel {
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            overflow: hidden;
+        }
+
+        .output-header {
+            padding: 0.75rem 1rem;
+            background: var(--surface-dark);
+            border-bottom: 1px solid var(--border);
+            font-weight: 500;
+            font-size: 0.875rem;
+        }
+
+        .output-content {
+            padding: 1rem;
+            min-height: 150px;
+            font-family: var(--font-mono);
+            font-size: 0.875rem;
+            line-height: 1.5;
+            white-space: pre-wrap;
+            background: var(--background);
+        }
+
+        /* Status Indicators */
+        .status {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.375rem;
+            padding: 0.25rem 0.75rem;
+            border-radius: 9999px;
+            font-size: 0.8rem;
+            font-weight: 500;
+        }
+
+        .status-success {
+            background: #dcfce7;
+            color: #166534;
+        }
+
+        .status-error {
+            background: #fef2f2;
+            color: #991b1b;
+        }
+
+        .status-warning {
+            background: #fef3c7;
+            color: #92400e;
+        }
+
+        /* Diff Highlighting */
+        .diff-added {
+            background-color: #dcfce7;
+            color: #166534;
+        }
+
+        .diff-removed {
+            background-color: #fef2f2;
+            color: #991b1b;
+        }
+
+        /* Special Character Symbols */
+        .newline-symbol {
+            color: var(--warning);
+            font-weight: 600;
+            font-size: 0.8em;
+            opacity: 0.8;
+        }
+
+        .tab-symbol {
+            color: var(--secondary);
+            font-weight: 600;
+            font-size: 0.9em;
+            opacity: 0.7;
+        }
+
+        .space-symbol {
+            color: var(--secondary);
+            font-weight: 600;
+            font-size: 0.7em;
+            opacity: 0.6;
+        }
+
+        /* Enhanced diff highlighting for special characters */
+        .diff-added .newline-symbol,
+        .diff-added .tab-symbol,
+        .diff-added .space-symbol {
+            background-color: rgba(22, 101, 52, 0.2);
+            border-radius: 2px;
+            padding: 0 2px;
+        }
+
+        .diff-removed .newline-symbol,
+        .diff-removed .tab-symbol,
+        .diff-removed .space-symbol {
+            background-color: rgba(153, 27, 27, 0.2);
+            border-radius: 2px;
+            padding: 0 2px;
+        }
+
+        /* Testcase Management */
+        .testcase-item {
+            padding: 0.75rem;
+            border-bottom: 1px solid var(--border);
+            cursor: pointer;
+            transition: background-color 0.2s ease;
+        }
+
+        .testcase-item:hover {
+            background: var(--surface-dark);
+        }
+
+        .testcase-item:last-child {
+            border-bottom: none;
+        }
+
+        .testcase-item.selected {
+            background: var(--primary-light);
+            color: var(--primary-dark);
+        }
+
+        /* File Upload */
+        .file-upload {
+            position: relative;
+            display: inline-block;
+        }
+
+        .file-upload input[type="file"] {
+            position: absolute;
+            opacity: 0;
             width: 100%;
+            height: 100%;
+            cursor: pointer;
         }
 
-        .output-box {
-            width: 48%;
-            border: 1px solid #ccc;
-            border-radius: 4px;
-            padding: 10px;
-            background-color: #fff;
-            text-align: left;
+        /* Notifications */
+        .notification {
+            position: fixed;
+            top: 1rem;
+            right: 1rem;
+            padding: 1rem 1.5rem;
+            border-radius: var(--radius);
+            box-shadow: var(--shadow-lg);
+            z-index: 1000;
+            animation: slideIn 0.3s ease;
         }
 
-        .result-container {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
+        .notification-success {
+            background: var(--success);
+            color: white;
+        }
+
+        .notification-error {
+            background: var(--error);
+            color: white;
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        /* Responsive Design */
+        @media (max-width: 640px) {
+            .container {
+                padding: 0 0.75rem;
+            }
+            
+            .card-content, .card-header {
+                padding: 1rem;
+            }
+            
+            .btn-group {
+                flex-direction: column;
+            }
+            
+            .btn {
+                width: 100%;
+            }
+            
+            .results-summary {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 1rem;
+            }
+        }
+
+        /* Dark mode support */
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --background: #0f172a;
+                --surface: #1e293b;
+                --surface-dark: #334155;
+                --text-primary: #f1f5f9;
+                --text-secondary: #94a3b8;
+                --border: #334155;
+                --border-dark: #475569;
+            }
+        }
+
+        .form-select {
             width: 100%;
+            padding: 0.75rem;
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            background: var(--surface);
+            color: var(--text-primary);
+            font-size: 0.9rem;
+            transition: border-color 0.2s ease, box-shadow 0.2s ease;
         }
 
-        .button-container {
-            display: flex;
-            align-items: center;
+        .form-select:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px var(--primary-light);
         }
 
-        .button-container button {
-            margin: 0 5px;
+        .form-select[multiple] {
+            padding: 0.5rem;
         }
 
-        #testSummary {
-            display: flex;
-            align-items: center;
+        .form-select[multiple] option {
+            padding: 0.5rem;
+            margin-bottom: 2px;
+            border-radius: var(--radius);
+            cursor: pointer;
         }
 
-        #testSummary p {
-            margin: 0 10px;
+        .form-select[multiple] option:hover {
+            background-color: var(--surface-dark);
+        }
+
+        .form-select[multiple] option:checked {
+            background-color: var(--primary);
+            color: white;
         }
     </style>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/diff_match_patch/20121119/diff_match_patch.js"></script>
 </head>
 <body>
+    <div class="app">
+        <!-- Header -->
+        <header class="header">
     <div class="container">
-        <h2 onclick="toggleContent(this)">測試資料管理</h2>
-        <div class="content">
-            <div>
-                <h3>新增測試資料</h3>
-                命名新測試檔名 (不包含副檔名): <input type="text" id="testName"><br>
-                輸入內容 (.in): <textarea id="testInput" rows="4" cols="50"></textarea><br>
-                預期輸出 (.out): <textarea id="testOutput" rows="4" cols="50"></textarea><br>
-                <button onclick="uploadTestcase()">上傳</button>
-                <div id="uploadSpinner" class="spinner"></div>
+                <div class="header-content">
+                    <div class="logo">🏁 Simple Code Judge</div>
+                    <div class="stats" id="systemStats">
+                        <div class="stat-item">
+                            <span class="stat-label">測試案例:</span>
+                            <span class="stat-value" id="totalTestcases">-</span>
             </div>
-            <div>
-                <h3>管理測試資料</h3>
-                <select id="testcaseSelect" multiple></select>
-                <button onclick="loadTestcase()">預覽測試資料</button>
-                <button onclick="deleteTestcase()">刪除測試資料</button>
-                <button onclick="deleteAllTestcase()">刪除所有測試資料</button>
-                <div id="deleteSpinner" class="spinner"></div>
-                <div id="loadedTestcases"></div>
+                        <div class="stat-item">
+                            <span class="stat-label">預設語言:</span>
+                            <span class="stat-value" id="lastLanguage">-</span>
             </div>
-            <div>
-                <h3>匯出/匯入測試資料夾</h3>
-                <button onclick="exportTestcases()">匯出(zip)</button>
-                <input type="file" id="importFile" webkitdirectory style="display:none" onchange="importTestcases(event)">
-                <button onclick="document.getElementById('importFile').click()">匯入(dir)</button>
-                <div id="exportSpinner" class="spinner"></div>
-                <div id="importSpinner" class="spinner"></div>
+                        <div class="stat-item">
+                            <span class="stat-label">執行限制:</span>
+                            <span class="stat-value" id="maxExecutionTime">-</span>
             </div>
+                        <div class="stat-item">
+                            <span class="stat-label">記憶體限制:</span>
+                            <span class="stat-value" id="memoryLimitDisplay">-</span>
         </div>
     </div>
+                </div>
+            </div>
+        </header>
 
+        <!-- Main Content -->
+        <main class="main-content">
     <div class="container">
-        <h2 onclick="toggleContent(this)">提交程式碼</h2>
-        <div class="content">
-            <textarea id="codeInput" rows="10" cols="50"></textarea><br>
-            語言:
-            <select id="langSelect">
-                <option value="default">預設</option>
+                <div class="grid">
+                    <!-- Testcase Management -->
+                    <div class="card">
+                        <div class="card-header">
+                            <h2 class="card-title" onclick="toggleCard(this)">
+                                📁 測試資料管理
+                                <span class="expand-icon">▼</span>
+                            </h2>
+                            <p class="card-subtitle">上傳、管理和匯入/匯出測試案例</p>
+                        </div>
+                        <div class="card-content">
+                            <!-- Add Testcase -->
+                            <div class="form-group">
+                                <label class="form-label">新增測試案例</label>
+                                <input type="text" id="testName" class="form-input" placeholder="測試案例名稱">
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">輸入資料 (.in)</label>
+                                <textarea id="testInput" class="form-textarea" placeholder="輸入測試資料..."></textarea>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">預期輸出 (.out) - 可選</label>
+                                <textarea id="testOutput" class="form-textarea" placeholder="預期輸出..."></textarea>
+                            </div>
+                            <div class="btn-group">
+                                <button onclick="uploadTestcase()" class="btn btn-primary" id="uploadBtn">
+                                    <span class="spinner" id="uploadSpinner" style="display: none;"></span>
+                                    上傳測試案例
+                                </button>
+                            </div>
+
+                            <!-- Testcase List -->
+                            <div class="form-group" style="margin-top: 2rem;">
+                                <label class="form-label">現有測試案例</label>
+                                <select id="testcaseSelect" class="form-select" multiple size="6" style="min-height: 150px;"></select>
+                            </div>
+                            <div class="btn-group">
+                                <button onclick="loadTestcase()" class="btn btn-secondary">預覽</button>
+                                <button onclick="deleteTestcase()" class="btn btn-warning">刪除已選擇</button>
+                                <button onclick="deleteAllTestcase()" class="btn btn-error">全部刪除</button>
+                            </div>
+
+                            <!-- Import/Export -->
+                            <div style="margin-top: 2rem;">
+                                <div class="btn-group">
+                                    <button onclick="exportTestcases()" class="btn btn-secondary">
+                                        <span class="spinner" id="exportSpinner" style="display: none;"></span>
+                                        匯出 ZIP
+                                    </button>
+                                    <div class="file-upload">
+                                        <button class="btn btn-secondary" id="importBtn" onclick="document.getElementById('importFile').click()">
+                                            <span class="spinner" id="importSpinner" style="display: none;"></span>
+                                            匯入檔案
+                                        </button>
+                                        <input type="file" id="importFile" accept=".zip,.in,.out" multiple onchange="importTestcases(event)" style="display: none;">
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Loaded Testcases Preview -->
+                            <div id="loadedTestcases" style="margin-top: 1.5rem;"></div>
+                        </div>
+                    </div>
+
+                    <!-- Code Submission -->
+                    <div class="card">
+                        <div class="card-header">
+                            <h2 class="card-title" onclick="toggleCard(this)">
+                                ⚡ 程式碼提交
+                                <span class="expand-icon">▼</span>
+                            </h2>
+                            <p class="card-subtitle">提交程式碼進行自動評判</p>
+                        </div>
+                        <div class="card-content">
+                            <div class="form-group">
+                                <label class="form-label">程式碼</label>
+                                <textarea id="codeInput" class="form-textarea code-editor" placeholder="請輸入您的程式碼..."></textarea>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">程式語言</label>
+                                <select id="langSelect" class="form-select">
+                                    <option value="default">使用預設語言 -</option>
                 <option value="cpp">C++</option>
                 <option value="java">Java</option>
                 <option value="python">Python</option>
+                                    <option value="javascript">JavaScript</option>
+                                    <option value="golang">Go</option>
             </select>
-            <button onclick="submitCode()">測試</button>
-            <div id="submitSpinner" class="spinner"></div>
+                            </div>
+                            <div class="btn-group">
+                                <button onclick="submitCode()" class="btn btn-primary" id="submitBtn">
+                                    <span class="spinner" id="submitSpinner" style="display: none;"></span>
+                                    🚀 開始評判
+                                </button>
+                                <button onclick="clearCode()" class="btn btn-secondary">清空代碼</button>
+                            </div>
         </div>
     </div>
 
-    <div class="carousel-container">
-        <div id="resultOutput" class="carousel">
-            <h3 id="resultTitle">等待測試結果...</h3>
-            <div class="result-container">
-                <div class="button-container">
-                    <button onclick="prevResult()">&#9664;</button>
-                    <button onclick="nextResult()">&#9654;</button>
+                    <!-- System Settings -->
+                    <div class="card settings-card">
+                        <div class="card-header">
+                            <h2 class="card-title" onclick="toggleCard(this)">
+                                ⚙️ 系統設定
+                                <span class="expand-icon">▼</span>
+                            </h2>
+                            <p class="card-subtitle">調整執行限制和系統參數</p>
                 </div>
-                <p><strong>測試結果:</strong> <span id="comparisonResult"></span></p>
-                <div id="testSummary">
-                    <p><strong>通過數量:</strong> <span id="successCount"></span></p>
-                    <p><strong>總數量:</strong> <span id="totalCount"></span></p>
+                        <div class="card-content collapsed">
+                            <div class="form-group">
+                                <label class="form-label">執行時間限制 (秒)</label>
+                                <input type="number" id="executionTimeLimit" class="form-input" min="1" max="60" step="0.1" placeholder="5">
+                                <small class="form-help">程式執行的最大時間限制 (1-60秒)</small>
                 </div>
+                            <div class="form-group">
+                                <label class="form-label">記憶體限制 (MB)</label>
+                                <input type="number" id="memoryLimit" class="form-input" min="1" max="1024" placeholder="128">
+                                <small class="form-help">程式執行的記憶體限制 (1-1024MB)</small>
             </div>
-            <div class="output-container">
-                <div class="output-box">
-                    <p><strong>程式輸出:</strong></p>
-                    <div id="userOutput" class="output" style="white-space: pre-wrap;"></div>
+                            <div class="form-group">
+                                <label class="form-label">編譯時間限制 (秒)</label>
+                                <input type="number" id="compileTimeLimit" class="form-input" min="1" max="60" step="0.1" placeholder="10">
+                                <small class="form-help">程式編譯的最大時間限制 (1-60秒)</small>
                 </div>
-                <div class="output-box">
-                    <p><strong>預期輸出:</strong></p>
-                    <div id="expectedOutput" class="output" style="white-space: pre-wrap;"></div>
+                            <div class="form-group">
+                                <label class="form-label">其他設定</label>
+                                <div class="checkbox-group">
+                                    <label class="checkbox-label">
+                                        <input type="checkbox" id="autoSaveCode" class="form-checkbox">
+                                        自動保存程式碼
+                                    </label>
+                                    <label class="checkbox-label">
+                                        <input type="checkbox" id="showExecutionTime" class="form-checkbox">
+                                        顯示執行時間
+                                    </label>
+                                </div>
+                            </div>
+                            <div class="btn-group">
+                                <button onclick="saveSettings()" class="btn btn-primary" id="saveSettingsBtn">
+                                    <span class="spinner" id="saveSettingsSpinner" style="display: none;"></span>
+                                    💾 保存設定
+                                </button>
+                                <button onclick="resetSettings()" class="btn btn-secondary">重置為預設值</button>
+                                <button onclick="loadSettings()" class="btn btn-secondary">重新載入</button>
                 </div>
             </div>
         </div>
     </div>
 
+                <!-- Results Display -->
+                <div class="results-container" id="resultsContainer" style="display: none;">
+                    <div class="results-header">
+                        <h3 class="results-title" id="resultTitle">評判結果</h3>
+                        <div class="results-summary">
+                            <div class="summary-item">
+                                <span class="summary-label">狀態:</span>
+                                <span class="status" id="testStatus">等待中...</span>
+                            </div>
+                            <div class="summary-item">
+                                <span class="summary-label">通過率:</span>
+                                <span class="summary-value" id="successRate">-</span>
+                            </div>
+                            <div class="summary-item">
+                                <span class="summary-label">通過:</span>
+                                <span class="summary-value" id="successCount">0</span>
+                            </div>
+                            <div class="summary-item">
+                                <span class="summary-label">總計:</span>
+                                <span class="summary-value" id="totalCount">0</span>
+                            </div>
+                            <div class="summary-item">
+                                <span class="summary-label">語言:</span>
+                                <span class="summary-value" id="usedLanguage">-</span>
+                            </div>
+                            <div class="results-navigation">
+                                <button onclick="prevResult()" class="btn btn-icon btn-secondary" id="prevBtn">‹</button>
+                                <span id="resultIndex">1/1</span>
+                                <button onclick="nextResult()" class="btn btn-icon btn-secondary" id="nextBtn">›</button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="results-content">
+                        <div class="form-group">
+                            <div class="summary-item">
+                                <span class="summary-label">當前測試:</span>
+                                <span class="summary-value" id="currentTestName">-</span>
+                                <span class="summary-label" style="margin-left: 1rem;">執行時間:</span>
+                                <span class="summary-value" id="executionTime">-</span>
+                                <button onclick="toggleSpecialChars()" class="btn btn-sm btn-secondary" id="toggleSpecialCharsBtn" 
+                                        style="margin-left: 1rem;" 
+                                        title="切換顯示換行符(↵)、Tab符(→)和空格符(·)，幫助找出輸出差異">
+                                    顯示特殊字符
+                                </button>
+                            </div>
+                        </div>
+                        <div class="output-comparison">
+                            <div class="output-panel">
+                                <div class="output-header">💻 程式輸出</div>
+                                <div class="output-content" id="userOutput"></div>
+                            </div>
+                            <div class="output-panel">
+                                <div class="output-header">✅ 預期輸出</div>
+                                <div class="output-content" id="expectedOutput"></div>
+                            </div>
+                        </div>
+                        <div id="symbolLegend" style="display: none; margin-top: 1rem; padding: 0.75rem; background: var(--surface-dark); border-radius: var(--radius); font-size: 0.8rem; color: var(--text-secondary);">
+                            <strong>符號說明:</strong> 
+                            <span class="newline-symbol">↵</span> 換行符 · 
+                            <span class="tab-symbol">→</span> Tab符 · 
+                            <span class="space-symbol">·</span> 空格 · 
+                            <span style="background: #dcfce7; padding: 0 2px; border-radius: 2px;">綠色</span> 多出的內容 · 
+                            <span style="background: #fef2f2; padding: 0 2px; border-radius: 2px;">紅色</span> 缺少的內容
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
 
     <script>
-        function toggleContent(element) {
-            const content = element.nextElementSibling;
-            content.classList.toggle('show');
-        }
-
+        // Global variables
         let testResults = [];
         let currentIndex = 0;
+        let systemInfo = {};
+        let showSpecialChars = false; // 控制是否顯示特殊字符
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            loadSystemStats();
+            refreshTestcaseOptions();
+            loadSettings(); // 載入系統設定
+        });
+
+        // Utility functions
+        function toggleCard(element) {
+            const content = element.closest('.card').querySelector('.card-content');
+            const icon = element.querySelector('.expand-icon');
+            
+            content.classList.toggle('collapsed');
+            icon.classList.toggle('expanded');
+        }
 
         function showSpinner(spinnerId) {
             document.getElementById(spinnerId).style.display = 'inline-block';
@@ -310,94 +939,235 @@
             document.getElementById(spinnerId).style.display = 'none';
         }
 
-        function uploadTestcase() {
-            showSpinner('uploadSpinner');
-            let testName = document.getElementById("testName").value;
-            let testInput = document.getElementById("testInput").value;
-            let testOutput = document.getElementById("testOutput").value;
-
-            let formData = new FormData();
-            formData.append("name", testName);
-            formData.append("input", testInput);
-            formData.append("output", testOutput);
-
-            fetch("/upload", { method: "POST", body: formData })
-                .then(res => res.json())
-                .then(data => {
-                    alert(data.message || data.error);
-                    hideSpinner('uploadSpinner');
-                    refreshTestcaseOptions();
-                });
-        }
-
-        function submitCode() {
-            showSpinner('submitSpinner');
-            let code = document.getElementById("codeInput").value;
-            let lang = document.getElementById("langSelect").value;
-            let formData = new FormData();
-            formData.append("code", code);
-            formData.append("lang", lang);
-
-            let selectedTestcases = Array.from(document.getElementById("testcaseSelect").selectedOptions).map(option => option.value);
-            formData.append("testcases", JSON.stringify(selectedTestcases));
+        function showNotification(message, type = 'success') {
+            const notification = document.createElement('div');
+            notification.className = `notification notification-${type}`;
+            notification.textContent = message;
+            document.body.appendChild(notification);
             
-            fetch("/judge", { method: "POST", body: formData })
-                .then(res => res.json())
-                .then(data => {
-                    if (!data.results) {
-                        throw new Error("No results found in response");
-                    }
-                    testResults = Object.entries(data.results); // 只取 results 部分
-                    currentIndex = 0;
-                    updateResultDisplay();
-                    hideSpinner('submitSpinner');
-                })
-                .catch(error => {
-                    console.error("Error:", error);
-                    alert("提交程式碼時發生錯誤，請稍後再試。");
-                    hideSpinner('submitSpinner');
-                });
+            setTimeout(() => {
+                notification.remove();
+            }, 4000);
         }
 
-        function updateResultDisplay() {
-            if (testResults.length === 0) {
-                document.getElementById("resultTitle").innerText = "無測試結果";
-                document.getElementById("userOutput").innerHTML = "";
-                document.getElementById("expectedOutput").innerHTML = "";
-                document.getElementById("comparisonResult").innerText = "";
-                document.getElementById("successCount").innerText = "0";
-                document.getElementById("totalCount").innerText = "0";
+        function setButtonLoading(buttonId, loading) {
+            const button = document.getElementById(buttonId);
+            if (!button) return;
+            
+            const spinner = button.querySelector('.spinner');
+            
+            if (loading) {
+                button.disabled = true;
+                if (spinner) spinner.style.display = 'inline-block';
+            } else {
+                button.disabled = false;
+                if (spinner) spinner.style.display = 'none';
+            }
+        }
+
+        // API calls
+        async function loadSystemStats() {
+            try {
+                const response = await fetch('/api/stats');
+                const data = await response.json();
+                
+                if (response.ok) {
+                    systemInfo = data;
+                    updateSystemStatsDisplay(data);
+                }
+            } catch (error) {
+                console.error('載入系統統計失敗:', error);
+            }
+        }
+
+        function updateSystemStatsDisplay(data) {
+            document.getElementById('totalTestcases').textContent = data.testcase_stats.total_testcases;
+            document.getElementById('lastLanguage').textContent = data.last_language || '無';
+            document.getElementById('maxExecutionTime').textContent = `${data.max_execution_time}秒`;
+            document.getElementById('memoryLimitDisplay').textContent = `${data.memory_limit}MB`;
+            
+            // 更新預設語言選項的顯示
+            updateDefaultLanguageOption(data.last_language);
+        }
+
+        function updateDefaultLanguageOption(lastLanguage) {
+            const defaultOption = document.querySelector('#langSelect option[value="default"]');
+            if (defaultOption) {
+                if (lastLanguage && lastLanguage !== '無') {
+                    // 語言名稱映射
+                    const langNames = {
+                        'cpp': 'C++',
+                        'java': 'Java', 
+                        'python': 'Python',
+                        'javascript': 'JavaScript',
+                        'golang': 'Go'
+                    };
+                    const displayName = langNames[lastLanguage] || lastLanguage;
+                    defaultOption.textContent = `使用預設語言 - ${displayName}`;
+                } else {
+                    defaultOption.textContent = '使用預設語言 - 無';
+                }
+            }
+        }
+
+        async function uploadTestcase() {
+            const name = document.getElementById('testName').value.trim();
+            const testInput = document.getElementById('testInput').value;
+            const testOutput = document.getElementById('testOutput').value;
+
+            if (!name || !testInput) {
+                showNotification('請提供測試檔名和輸入內容', 'error');
                 return;
             }
+
+            setButtonLoading('uploadBtn', true);
+
+            try {
+                const formData = new FormData();
+                formData.append('name', name);
+                formData.append('input', testInput);
+                formData.append('output', testOutput);
+
+                const response = await fetch('/upload', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    showNotification(data.message);
+                    document.getElementById('testName').value = '';
+                    document.getElementById('testInput').value = '';
+                    document.getElementById('testOutput').value = '';
+                    refreshTestcaseOptions();
+                    loadSystemStats();
+                } else {
+                    showNotification(data.error, 'error');
+                }
+            } catch (error) {
+                showNotification('上傳失敗，請稍後再試', 'error');
+            } finally {
+                setButtonLoading('uploadBtn', false);
+            }
+        }
+
+        async function submitCode() {
+            const code = document.getElementById('codeInput').value.trim();
+            const lang = document.getElementById('langSelect').value;
+
+            if (!code) {
+                showNotification('請輸入程式碼', 'error');
+                return;
+            }
+
+            setButtonLoading('submitBtn', true);
+            document.getElementById('resultsContainer').style.display = 'block';
+            updateResultsDisplay({ waiting: true });
+
+            try {
+                const formData = new FormData();
+                formData.append('code', code);
+                formData.append('lang', lang);
+
+                const response = await fetch('/judge', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const data = await response.json();
+
+                if (response.ok && data.results) {
+                    testResults = Object.entries(data.results);
+                    currentIndex = 0;
+                    updateResultsDisplay(data);
+                    showNotification(`評判完成！通過 ${data.summary.success_count}/${data.summary.total_count} 測試`);
+                    
+                    // 更新系統統計，包括預設語言
+                    loadSystemStats();
+                } else {
+                    showNotification(data.error || '評判失敗', 'error');
+                    updateResultsDisplay({ error: data.error });
+                }
+            } catch (error) {
+                showNotification('提交失敗，請稍後再試', 'error');
+                updateResultsDisplay({ error: '網絡錯誤' });
+            } finally {
+                setButtonLoading('submitBtn', false);
+            }
+        }
+
+        function updateResultsDisplay(data) {
+            if (data.waiting) {
+                document.getElementById('testStatus').textContent = '評判中...';
+                document.getElementById('testStatus').className = 'status status-warning';
+                return;
+            }
+
+            if (data.error) {
+                document.getElementById('testStatus').textContent = '評判失敗';
+                document.getElementById('testStatus').className = 'status status-error';
+                document.getElementById('userOutput').textContent = data.error;
+                document.getElementById('expectedOutput').textContent = '';
+                return;
+            }
+
+            if (testResults.length === 0) {
+                document.getElementById('testStatus').textContent = '無測試結果';
+                document.getElementById('testStatus').className = 'status status-warning';
+                return;
+            }
+
+            const summary = data.summary;
+            const isAllPassed = summary.success_count === summary.total_count;
+            
+            document.getElementById('testStatus').textContent = isAllPassed ? '全部通過' : '部分通過';
+            document.getElementById('testStatus').className = `status ${isAllPassed ? 'status-success' : 'status-warning'}`;
+            
+            document.getElementById('successRate').textContent = summary.success_rate;
+            document.getElementById('successCount').textContent = summary.success_count;
+            document.getElementById('totalCount').textContent = summary.total_count;
+            document.getElementById('usedLanguage').textContent = summary.language;
+
+            updateCurrentTestDisplay();
+        }
+
+        function updateCurrentTestDisplay() {
+            if (testResults.length === 0) return;
 
             const [filename, result] = testResults[currentIndex];
-            if (typeof result !== 'object') {
-                console.error(`Unexpected result type: ${typeof result}`);
-                return;
-            }
-
-            const { user_output: userOutput, expected_output: expectedOutput, comparison_result: comparisonResult } = result;
-
-            document.getElementById("resultTitle").innerText = `${filename} (${currentIndex + 1}/${testResults.length})`;
-            document.getElementById("userOutput").innerHTML = userOutput || "";
-            document.getElementById("expectedOutput").innerHTML = expectedOutput || "";
-            document.getElementById("comparisonResult").innerText = comparisonResult;
-
-            const successCount = testResults.filter(([_, result]) => result.comparison_result === "通過 ✅").length;
-            document.getElementById("successCount").innerText = successCount;
-            document.getElementById("totalCount").innerText = testResults.length;
-
+            
+            document.getElementById('resultIndex').textContent = `${currentIndex + 1}/${testResults.length}`;
+            document.getElementById('currentTestName').textContent = filename;
+            document.getElementById('executionTime').textContent = result.execution_time || '-';
+            
+            const userOutput = result.user_output || '';
+            const expectedOutput = result.expected_output || '';
+            
+            // Update output displays with diff highlighting
             highlightDifferences(userOutput, expectedOutput);
+            
+            // Update navigation buttons
+            document.getElementById('prevBtn').disabled = currentIndex === 0;
+            document.getElementById('nextBtn').disabled = currentIndex === testResults.length - 1;
         }
 
         function highlightDifferences(userOutput, expectedOutput) {
-            const userOutputElement = document.getElementById("userOutput");
-            const expectedOutputElement = document.getElementById("expectedOutput");
+            const userOutputElement = document.getElementById('userOutput');
+            const expectedOutputElement = document.getElementById('expectedOutput');
 
-            userOutputElement.classList.remove("highlight");
-            expectedOutputElement.classList.remove("highlight");
+            if (userOutput.trim() === expectedOutput.trim()) {
+                if (showSpecialChars) {
+                    userOutputElement.innerHTML = visualizeSpecialChars(userOutput);
+                    expectedOutputElement.innerHTML = visualizeSpecialChars(expectedOutput);
+                } else {
+                    userOutputElement.textContent = userOutput;
+                    expectedOutputElement.textContent = expectedOutput;
+                }
+                return;
+            }
 
-            if (userOutput !== expectedOutput) {
+            try {
                 const dmp = new diff_match_patch();
                 const diff = dmp.diff_main(expectedOutput, userOutput);
                 dmp.diff_cleanupSemantic(diff);
@@ -406,195 +1176,381 @@
                 let expectedOutputHtml = '';
 
                 diff.forEach(part => {
-                    const color = part[0] === 1 ? 'background-color: #ffdddd;' :
-                                part[0] === -1 ? 'background-color: #ddffdd;' : '';
-
-                    if (part[0] === 1) {
-                        userOutputHtml += `<span style="${color}">${part[1].replace(/\n/g, '<br>')}</span>`;
-                    } else if (part[0] === -1) {
-                        expectedOutputHtml += `<span style="${color}">${part[1].replace(/\n/g, '<br>')}</span>`;
+                    const [operation, text] = part;
+                    
+                    if (showSpecialChars) {
+                        const processedText = visualizeSpecialChars(text);
+                        
+                        if (operation === 1) { // Addition (用戶輸出多出的部分)
+                            userOutputHtml += `<span class="diff-added">${processedText}</span>`;
+                        } else if (operation === -1) { // Deletion (預期輸出中缺少的部分)
+                            expectedOutputHtml += `<span class="diff-removed">${processedText}</span>`;
+                        } else { // No change (相同的部分)
+                            userOutputHtml += processedText;
+                            expectedOutputHtml += processedText;
+                        }
                     } else {
-                        userOutputHtml += part[1].replace(/\n/g, '<br>');
-                        expectedOutputHtml += part[1].replace(/\n/g, '<br>');
+                        // 普通模式，只轉義 HTML 字符
+                        const escapedText = escapeHtml(text);
+                        
+                        if (operation === 1) { // Addition
+                            userOutputHtml += `<span class="diff-added">${escapedText}</span>`;
+                        } else if (operation === -1) { // Deletion
+                            expectedOutputHtml += `<span class="diff-removed">${escapedText}</span>`;
+                        } else { // No change
+                            userOutputHtml += escapedText;
+                            expectedOutputHtml += escapedText;
+                        }
                     }
                 });
 
                 userOutputElement.innerHTML = userOutputHtml;
                 expectedOutputElement.innerHTML = expectedOutputHtml;
-            } else {
-                userOutputElement.innerHTML = userOutput.replace(/\n/g, '<br>');
-                expectedOutputElement.innerHTML = expectedOutput.replace(/\n/g, '<br>');
+            } catch (error) {
+                // 如果 diff 庫出錯，則使用簡單的文字顯示
+                if (showSpecialChars) {
+                    userOutputElement.innerHTML = visualizeSpecialChars(userOutput);
+                    expectedOutputElement.innerHTML = visualizeSpecialChars(expectedOutput);
+                } else {
+                    userOutputElement.textContent = userOutput;
+                    expectedOutputElement.textContent = expectedOutput;
+                }
             }
+        }
+
+        function escapeHtml(text) {
+            return text
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;');
+        }
+
+        function visualizeSpecialChars(text) {
+            return escapeHtml(text)
+                .replace(/\n/g, '<span class="newline-symbol">↵</span>\n')
+                .replace(/\t/g, '<span class="tab-symbol">→</span>')
+                .replace(/ /g, '<span class="space-symbol">·</span>');
         }
 
         function prevResult() {
             if (currentIndex > 0) {
                 currentIndex--;
-                updateResultDisplay();
+                updateCurrentTestDisplay();
             }
         }
 
         function nextResult() {
             if (currentIndex < testResults.length - 1) {
                 currentIndex++;
-                updateResultDisplay();
+                updateCurrentTestDisplay();
             }
         }
 
-        function exportTestcases() {
-            showSpinner('exportSpinner');
-            fetch("/export", { method: "GET" })
-                .then(res => res.blob())
-                .then(blob => {
-                    hideSpinner('exportSpinner');
-                    saveAs(blob, "testcases.zip");
-                });
+        function clearCode() {
+            document.getElementById('codeInput').value = '';
         }
 
-        function importTestcases(event) {
-            showSpinner('importSpinner');
-            let files = event.target.files;
+        async function exportTestcases() {
+            setButtonLoading('exportBtn', true);
+            
+            try {
+                const response = await fetch('/export');
+                if (response.ok) {
+                    const blob = await response.blob();
+                    const url = window.URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = 'testcases.zip';
+                    a.click();
+                    window.URL.revokeObjectURL(url);
+                    showNotification('測試資料匯出成功');
+                } else {
+                    showNotification('匯出失敗', 'error');
+                }
+            } catch (error) {
+                showNotification('匯出失敗', 'error');
+            } finally {
+                setButtonLoading('exportBtn', false);
+            }
+        }
+
+        async function importTestcases(event) {
+            const files = event.target.files;
             if (!files.length) return;
 
-            let formData = new FormData();
-            for (let file of files) {
-                formData.append("files", file);
-            }
+            setButtonLoading('importBtn', true);
 
-            fetch("/import", { method: "POST", body: formData })
-                .then(res => res.json())
-                .then(data => {
-                    alert(data.message || data.error);
-                    hideSpinner('importSpinner');
-                    refreshTestcaseOptions();
+            try {
+                const formData = new FormData();
+                
+                // 檢查是否是 ZIP 檔案
+                let hasZipFile = false;
+                for (let file of files) {
+                    if (file.name.toLowerCase().endsWith('.zip')) {
+                        hasZipFile = true;
+                        formData.append('zipfile', file);
+                    } else if (file.name.toLowerCase().endsWith('.in') || file.name.toLowerCase().endsWith('.out')) {
+                        formData.append('files', file);
+                    }
+                }
+
+                const response = await fetch('/import', {
+                    method: 'POST',
+                    body: formData
                 });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    showNotification(data.message);
+                    refreshTestcaseOptions();
+                    loadSystemStats();
+                } else {
+                    showNotification(data.error, 'error');
+                }
+            } catch (error) {
+                console.error('匯入錯誤:', error);
+                showNotification('匯入失敗', 'error');
+            } finally {
+                setButtonLoading('importBtn', false);
+                event.target.value = ''; // Reset file input
+            }
         }
 
-        function deleteTestcase() {
-            let selectedTestcases = Array.from(document.getElementById("testcaseSelect").selectedOptions).map(option => option.value);
+        async function deleteTestcase() {
+            const selectedTestcases = Array.from(document.getElementById('testcaseSelect').selectedOptions)
+                .map(option => option.value);
+
             if (selectedTestcases.length === 0) {
-                alert("請選擇要刪除的測試資料");
+                showNotification('請選擇要刪除的測試資料', 'error');
                 return;
             }
 
-            // 確認對話框
             if (!confirm(`確定要刪除以下測試資料嗎？\n${selectedTestcases.join('\n')}`)) {
                 return;
             }
 
-            showSpinner('deleteSpinner');
-
-            fetch("/delete", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
+            try {
+                const response = await fetch('/delete', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ testcases: selectedTestcases })
-            })
-                .then(res => res.json())
-                .then(data => {
-                    alert(data.message || data.error);
-                    if (!data.error) {
-                        // 移除已刪除的選項
-                        let select = document.getElementById("testcaseSelect");
-                        selectedTestcases.forEach(testcase => {
-                            let option = select.querySelector(`option[value="${testcase}"]`);
-                            if (option) option.remove();
-                        });
-                    }
-                    hideSpinner('deleteSpinner');
                 });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    showNotification(data.message);
+                    refreshTestcaseOptions();
+                    loadSystemStats();
+                } else {
+                    showNotification(data.error, 'error');
+                }
+            } catch (error) {
+                showNotification('刪除失敗', 'error');
+            }
         }
-  
-        function deleteAllTestcase() {
-            let selectedTestcases = Array.from(document.getElementById("testcaseSelect")).map(option => option.value);
-            
-            // 確認對話框
-            if (!confirm(`確定要刪除所有測試資料嗎？`)) {
+
+        async function deleteAllTestcase() {
+            if (!confirm('確定要刪除所有測試資料嗎？此操作無法復原！')) {
                 return;
             }
 
-            showSpinner('deleteSpinner');
-
-            fetch("/deleteAll", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" }
-            })
-                .then(res => res.json())
-                .then(data => {
-                    alert(data.message || data.error);
-                    if (!data.error) {
-                        // Remove all displayed testcase
-                        let select = document.getElementById("testcaseSelect");
-                        selectedTestcases.forEach(testcase => {
-                            let option = select.querySelector(`option[value="${testcase}"]`);
-                            if (option) option.remove();
-                        });
-                    }
-                    hideSpinner('deleteSpinner');
+            try {
+                const response = await fetch('/deleteAll', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' }
                 });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    showNotification(data.message);
+                    refreshTestcaseOptions();
+                    loadSystemStats();
+                } else {
+                    showNotification(data.error, 'error');
+                }
+            } catch (error) {
+                showNotification('刪除失敗', 'error');
+            }
         }
 
-        function loadTestcase() {
-            let selectedTestcases = Array.from(document.getElementById("testcaseSelect").selectedOptions).map(option => option.value);
+        async function loadTestcase() {
+            const selectedTestcases = Array.from(document.getElementById('testcaseSelect').selectedOptions)
+                .map(option => option.value);
+
             if (selectedTestcases.length === 0) {
-                alert("請選擇要預覽的測試資料");
+                showNotification('請選擇要預覽的測試資料', 'error');
                 return;
             }
 
-            let loadedTestcasesDiv = document.getElementById("loadedTestcases");
-            loadedTestcasesDiv.innerHTML = ''; // 清空之前的內容
+            const loadedDiv = document.getElementById('loadedTestcases');
+            loadedDiv.innerHTML = '<div style="text-align: center; padding: 1rem;">載入中...</div>';
 
-            selectedTestcases.forEach(testcase => {
-                fetch(`/testcases/${testcase}`, { method: "GET" })
-                    .then(res => res.json())
-                    .then(data => {
-                        let testcaseDiv = document.createElement("div");
-                        testcaseDiv.className = "testcase";
+            try {
+                const testcasesData = await Promise.all(
+                    selectedTestcases.map(async (testcase) => {
+                        const response = await fetch(`/testcases/${testcase}`);
+                        const data = await response.json();
+                        return { name: testcase, ...data };
+                    })
+                );
 
-                        let testName = document.createElement("p");
-                        testName.innerText = `檔名: ${testcase}`;
-
-                        let testInput = document.createElement("textarea");
-                        testInput.rows = 4;
-                        testInput.cols = 50;
-                        testInput.value = data.input;
-                        testInput.readOnly = true;
-
-                        let testOutput = document.createElement("textarea");
-                        testOutput.rows = 4;
-                        testOutput.cols = 50;
-                        testOutput.value = data.output;
-                        testOutput.readOnly = true;
-
-                        testcaseDiv.appendChild(testName);
-                        testcaseDiv.appendChild(testInput);
-                        testcaseDiv.appendChild(testOutput);
-
-                        loadedTestcasesDiv.appendChild(testcaseDiv);
-                    });
-            });
-        }
-
-        function refreshTestcaseOptions() {
-            fetch("/testcases", { method: "GET" })
-                .then(res => res.json())
-                .then(files => {
-                    let select = document.getElementById("testcaseSelect");
-                    select.innerHTML = ''; // 清空選項
-                    let uniqueFiles = new Set(files.map(file => file.replace(/\.(in|out)$/, '')));
-                    let sortedFiles = Array.from(uniqueFiles).sort(); // 按名字排序
-                    sortedFiles.forEach(file => {
-                        let option = document.createElement("option");
-                        option.value = file;
-                        option.text = file;
-                        select.add(option);
-                    });
+                loadedDiv.innerHTML = '';
+                testcasesData.forEach(testcase => {
+                    const div = document.createElement('div');
+                    div.className = 'card';
+                    div.style.marginTop = '1rem';
+                    div.innerHTML = `
+                        <div class="card-header">
+                            <h4 class="card-title">${testcase.name}</h4>
+                        </div>
+                        <div class="card-content">
+                            <div class="form-group">
+                                <label class="form-label">輸入</label>
+                                <textarea class="form-textarea" readonly>${testcase.input}</textarea>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">預期輸出 ${testcase.has_output ? '' : '(無)'}</label>
+                                <textarea class="form-textarea" readonly>${testcase.output}</textarea>
+                            </div>
+                        </div>
+                    `;
+                    loadedDiv.appendChild(div);
                 });
+            } catch (error) {
+                loadedDiv.innerHTML = '<div style="color: var(--error); text-align: center; padding: 1rem;">載入失敗</div>';
+            }
         }
 
-        // 初始化測試資料選項
-        refreshTestcaseOptions();
+        async function refreshTestcaseOptions() {
+            try {
+                const response = await fetch('/testcases');
+                const files = await response.json();
+
+                if (response.ok) {
+                    const select = document.getElementById('testcaseSelect');
+                    select.innerHTML = '';
+
+                    const uniqueFiles = new Set(files.map(file => file.replace(/\.(in|out)$/, '')));
+                    const sortedFiles = Array.from(uniqueFiles).sort();
+
+                    sortedFiles.forEach(file => {
+                        const option = document.createElement('option');
+                        option.value = file;
+                        option.textContent = file;
+                        select.appendChild(option);
+                    });
+                }
+            } catch (error) {
+                console.error('更新測試案例列表失敗:', error);
+            }
+        }
+
+        function toggleSpecialChars() {
+            showSpecialChars = !showSpecialChars;
+            const btn = document.getElementById('toggleSpecialCharsBtn');
+            const legend = document.getElementById('symbolLegend');
+            
+            if (showSpecialChars) {
+                btn.textContent = '隱藏特殊字符';
+                btn.classList.remove('btn-secondary');
+                btn.classList.add('btn-primary');
+                legend.style.display = 'block';
+            } else {
+                btn.textContent = '顯示特殊字符';
+                btn.classList.remove('btn-primary');
+                btn.classList.add('btn-secondary');
+                legend.style.display = 'none';
+            }
+            
+            // 重新渲染當前結果
+            if (testResults.length > 0) {
+                updateCurrentTestDisplay();
+            }
+        }
+
+        // Settings Management
+        async function loadSettings() {
+            try {
+                const response = await fetch('/api/settings');
+                const data = await response.json();
+                
+                if (response.ok) {
+                    const settings = data.settings;
+                    
+                    // 填入表單
+                    document.getElementById('executionTimeLimit').value = settings.execution_time_limit || 5;
+                    document.getElementById('memoryLimit').value = settings.memory_limit || 128;
+                    document.getElementById('compileTimeLimit').value = settings.compile_time_limit || 10;
+                    document.getElementById('autoSaveCode').checked = settings.auto_save_code !== false;
+                    document.getElementById('showExecutionTime').checked = settings.show_execution_time !== false;
+                    
+                    // 更新header顯示
+                    loadSystemStats();
+                } else {
+                    showNotification('載入設定失敗', 'error');
+                }
+            } catch (error) {
+                console.error('載入設定失敗:', error);
+                showNotification('載入設定失敗', 'error');
+            }
+        }
+
+        async function saveSettings() {
+            setButtonLoading('saveSettingsBtn', true);
+            
+            try {
+                const settings = {
+                    execution_time_limit: parseFloat(document.getElementById('executionTimeLimit').value) || 5,
+                    memory_limit: parseInt(document.getElementById('memoryLimit').value) || 128,
+                    compile_time_limit: parseFloat(document.getElementById('compileTimeLimit').value) || 10,
+                    auto_save_code: document.getElementById('autoSaveCode').checked,
+                    show_execution_time: document.getElementById('showExecutionTime').checked
+                };
+
+                const response = await fetch('/api/settings', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ settings })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    showNotification('設定保存成功！');
+                    // 更新header顯示
+                    loadSystemStats();
+                } else {
+                    if (data.details && Array.isArray(data.details)) {
+                        showNotification(`設定保存失敗: ${data.details.join(', ')}`, 'error');
+                    } else {
+                        showNotification(data.error || '設定保存失敗', 'error');
+                    }
+                }
+            } catch (error) {
+                console.error('保存設定失敗:', error);
+                showNotification('保存設定失敗', 'error');
+            } finally {
+                setButtonLoading('saveSettingsBtn', false);
+            }
+        }
+
+        function resetSettings() {
+            if (confirm('確定要重置所有設定為預設值嗎？')) {
+                // 重置為預設值
+                document.getElementById('executionTimeLimit').value = 5;
+                document.getElementById('memoryLimit').value = 128;
+                document.getElementById('compileTimeLimit').value = 10;
+                document.getElementById('autoSaveCode').checked = true;
+                document.getElementById('showExecutionTime').checked = true;
+                
+                showNotification('設定已重置為預設值，請點擊保存以應用變更');
+            }
+        }
     </script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.7.1/jszip.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
 </body>
 </html>

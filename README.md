@@ -1,59 +1,221 @@
-# 簡單程式自動化測試
+# 🏁 Simple Code Judge - 程式碼評判系統
 
-這是一個簡單的程式自動化測試系統，使用 Flask 框架來建立後端伺服器，並提供上傳、匯出、匯入、刪除測試資料及提交程式碼進行測試的功能。
+一個現代化的線上程式碼評判系統，支援多種程式語言的自動評測，具備直觀的Web介面和強大的動態配置功能。
 
-## 專案結構
+## ✨ 主要功能
 
-- `app.py`：後端伺服器的主要程式碼，處理各種 API 請求。
-- `index.html`：前端介面，提供使用者與系統互動的網頁。
-- `favicon_io`：網站圖示。
-- `Dockerfile`：用於建立 Docker 映像檔的設定檔。
-- `README.md`：專案說明文件。
+### 🎯 程式碼評判
+- **多語言支援**: C++、Java、Python、JavaScript、Go
+- **即時執行**: 安全的沙箱環境執行程式碼
+- **詳細結果**: 執行時間、記憶體使用、錯誤訊息
+- **智慧差異對比**: 視覺化顯示輸出差異，支援特殊字符顯示
 
-## 使用方法
+### ⚙️ 動態系統設定
+- **執行限制控制**: 可調整執行時間限制（1-60秒）
+- **記憶體管理**: 動態設定記憶體限制（1-1024MB）
+- **編譯配置**: 自訂編譯時間限制（1-60秒）
+- **無限制輸出**: 支援任意長度的程式輸出
+- **彈性測試案例**: 無數量限制的測試案例上傳
 
-### 使用 Docker 執行
+### 📁 測試案例管理
+- **批量上傳**: 支援 .in/.out 檔案格式
+- **預覽功能**: 即時查看測試案例內容
+- **匯入/匯出**: ZIP 檔案格式批量處理
+- **智慧驗證**: 自動檢查檔案格式和內容
 
-1. 拉取並啟動容器：
+### 🎨 現代化介面
+- **響應式設計**: 支援桌面和移動設備
+- **暗黑模式**: 自動適應系統主題偏好
+- **直觀操作**: 清晰的視覺反饋和狀態提示
+- **實時統計**: 系統狀態和使用情況
+- **特殊字符視覺化**: 顯示換行符、Tab符和空格，助於測試
 
-    - 僅允許本機(localhost)使用
-        ```sh
-        docker run -d -p 127.0.0.1:5000:5000 -v judge_testcases:/app/testcases --name judge ghcr.io/0857boy/simple-code-judge
-        ```
-2. 開啟瀏覽器並訪問 `http://localhost:5000` 使用前端介面。
+## 🚀 快速開始
 
-> **注意：** volume `judge_testcases` 用於保存測試資料，可以在容器重啟後保留測試資料，若刪除volume則會遺失所有測試資料。
+### 使用 Docker（推薦）
 
-## 功能
+```bash
+# 使用預建構鏡像（推薦）
+docker run -d -p 127.0.0.1:5000:5000 -v judge_testcases:/app/testcases --name judge ghcr.io/0857boy/simple-code-judge
 
-1. **新增測試資料** 
-   ![addTestCase](/img/addTestCase.png)
-   填寫測試資料名稱、輸入內容、預期輸出，並點擊上傳按鈕即可新增測試資料。
-2. **管理測試資料**
-   ![manageTestCase](/img/manageTestCase.png)
-   可以預覽、刪除測試資料。
-3. **匯入/匯出測試資料**
-   ![importExport](/img/importExport.png)
-   可以匯入、匯出所有測試資料。 
-4. **提交程式碼進行測試**
-   ![judge](/img/judge.png)
-   填寫程式碼、選擇語言類別，並點擊測試按鈕即可進行測試。
-5. **查看測試結果**
-   ![rightResult](/img/rightResult.png)![errorResult](/img/ErrorResult.png)
-   可以查看測試結果，包括預期輸出、實際輸出，並且依照簡單比對結果可以快速找到不同之處。
- 
-## API 端點
+# 或本地建構
+docker build -t simple-code-judge .
+docker run -d -p 127.0.0.1:5000:5000 -v judge_testcases:/app/testcases --name judge simple-code-judge
+```
 
-- `GET /`：檢查伺服器狀態。
-- `POST /upload`：上傳測試資料。
-- `GET /testcases`：列出測試資料。
-- `GET /testcases/<name>`：取得特定測試資料。
-- `GET /export`：匯出測試資料。
-- `POST /import`：匯入測試資料。
-- `POST /delete`：刪除測試資料。
-- `POST /deleteAll`：一鍵刪除所有測試資料。
-- `POST /judge`：提交程式碼進行測試。
+### 本地開發
 
-## 貢獻
+```bash
+# 安裝依賴
+pip install -r requirements.txt
 
+# 安裝程式語言環境
+# Ubuntu/Debian:
+sudo apt update
+sudo apt install g++ openjdk-17-jdk nodejs golang-go
+
+# macOS:
+brew install gcc openjdk node go
+
+# 執行應用
+python app.py
+```
+
+訪問 `http://localhost:5000` 開始使用！
+
+## 🛠️ 技術架構
+
+### 後端技術棧
+- **Flask**: 輕量級 Web 框架
+- **Python 3.11+**: 現代 Python 特性
+- **Gunicorn**: 高性能 WSGI 伺服器
+- **安全沙箱**: 隔離程式碼執行環境
+- **動態配置**: JSON配置文件持久化設定
+
+### 前端技術棧
+- **現代 HTML5**: 語意化標記
+- **CSS3**: CSS Grid、Flexbox、CSS Variables
+- **Vanilla JavaScript**: ES6+ 語法，async/await
+- **響應式設計**: Mobile-first 方法
+- **實時通知**: 用戶操作反饋系統
+
+### 支援的程式語言
+
+| 語言 | 編譯器/解釋器 | 執行環境 | 特殊設定 |
+|------|-------------|---------|---------|
+| C++ | GCC (g++) | C++17 標準 | -O2 優化 |
+| Java | OpenJDK 17 | JVM | Main類別自動識別 |
+| Python | Python 3.11 | CPython | UTF-8 編碼 |
+| JavaScript | Node.js | V8 引擎 | ES6+ 支援 |
+| Go | Go 1.19+ | Go Runtime | 模組系統支援 |
+
+## 📊 系統特性
+
+### 🔧 可調整限制
+- **執行時間**: 1-60秒（動態可調）
+- **記憶體限制**: 1-1024MB（動態可調）
+- **編譯時間**: 1-60秒（動態可調）
+- **檔案大小**: 16MB上限
+- **輸出長度**: 無限制
+- **測試案例**: 無數量限制
+
+### 🚀 性能優化
+- **併發執行**: 多工處理支援
+- **智慧緩存**: 配置文件緩存機制
+- **輕量化設計**: 最小資源佔用
+- **彈性擴展**: 支援水平擴展
+
+## 🔒 安全功能
+
+- **沙箱執行**: 隔離的執行環境
+- **檔案驗證**: 嚴格的輸入檢查
+- **動態時間限制**: 防止無限迴圈
+- **權限控制**: 最小權限原則
+- **完整日誌**: 操作和錯誤追蹤
+- **非root執行**: Docker容器安全運行
+
+## 🎯 使用指南
+
+### 1. 系統設定
+1. 點擊「⚙️ 系統設定」展開設定面板
+2. 調整執行時間、記憶體、編譯時間限制
+3. 設定其他偏好選項
+4. 點擊「💾 保存設定」應用變更
+
+### 2. 建立測試案例
+1. 在「📁 測試資料管理」區域輸入測試案例名稱
+2. 提供輸入資料 (.in)
+3. （可選）提供預期輸出 (.out)
+4. 點擊「上傳測試案例」
+
+### 3. 提交程式碼
+1. 在「⚡ 程式碼提交」區域貼上您的程式碼
+2. 選擇程式語言
+3. 點擊「🚀 開始評判」
+4. 查看詳細的評判結果
+
+### 4. 分析結果
+- 查看每個測試案例的通過狀態
+- 比較程式輸出與預期輸出
+- 使用「顯示特殊字符」功能調試格式問題
+- 檢查執行時間和錯誤訊息
+- 使用導航按鈕查看不同測試案例
+
+## 🧩 API 文檔
+
+### 測試案例 API
+- `POST /upload` - 上傳測試案例
+- `GET /testcases` - 列出所有測試案例
+- `GET /testcases/<name>` - 獲取特定測試案例
+- `POST /delete` - 刪除選定測試案例
+- `POST /deleteAll` - 刪除所有測試案例
+
+### 評判 API
+- `POST /judge` - 提交程式碼進行評判
+- `GET /api/stats` - 獲取系統統計資訊
+
+### 設定管理 API
+- `GET /api/settings` - 獲取系統設定
+- `POST /api/settings` - 更新系統設定
+
+### 檔案管理 API
+- `GET /export` - 匯出測試案例 ZIP
+- `POST /import` - 匯入測試案例檔案
+
+## 🔧 配置選項
+
+系統支援動態配置，所有設定可通過Web介面調整：
+
+```json
+{
+  "settings": {
+    "execution_time_limit": 5,      // 執行時間限制（秒）
+    "memory_limit": 128,            // 記憶體限制（MB）
+    "compile_time_limit": 10,       // 編譯時間限制（秒）
+    "auto_save_code": true,         // 自動保存程式碼
+    "show_execution_time": true     // 顯示執行時間
+  }
+}
+```
+
+### 環境變數
+```bash
+PYTHONUNBUFFERED=1                  // Python 輸出即時顯示
+JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64
+```
+
+## 📝 版本歷史
+
+### v2.0.0
+- ✨ 新增動態系統設定面板
+- 🚀 移除輸出長度限制
+- 📈 移除測試案例數量限制
+- 🔧 新增設定管理API
+- 🎨 改進特殊字符顯示功能
+- 🐛 修復文件編碼問題
+
+### v1.0.0 - 基礎版本
+- 基礎程式碼評判功能
+- 多語言支援
+- Web介面
+
+### 開發環境設置
+```bash
+# 複製專案
+git clone [repository-url]
+cd Judge
+
+# 建立虛擬環境
+python -m venv venv
+source venv/bin/activate  // Linux/macOS
+# venv\Scripts\activate   // Windows
+
+# 安裝開發依賴
+pip install -r requirements.txt
+
+# 執行測試
+python -m pytest tests/
+```
+
+### 貢獻
 歡迎提交問題或請求功能，您可以透過提交 Pull Request 來貢獻您的代碼。
