@@ -224,23 +224,5 @@ JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64
 - 多語言支援
 - Web介面
 
-### 開發環境設置
-```bash
-# 複製專案
-git clone [repository-url]
-cd Judge
-
-# 建立虛擬環境
-python -m venv venv
-source venv/bin/activate  // Linux/macOS
-# venv\Scripts\activate   // Windows
-
-# 安裝開發依賴
-pip install -r requirements.txt
-
-# 執行測試
-python -m pytest tests/
-```
-
 ### 貢獻
 歡迎提交問題或請求功能，您可以透過提交 Pull Request 來貢獻您的代碼。
